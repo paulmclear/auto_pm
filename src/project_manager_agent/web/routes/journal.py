@@ -23,7 +23,7 @@ async def journal_list(request: Request, svc: ServiceDep):
     dates = [f.stem for f in files]
     return templates.TemplateResponse(
         "journal_list.html",
-        {"request": request, "dates": dates},
+        {"request": request, "dates": dates, "active_page": "journal"},
     )
 
 
@@ -39,5 +39,10 @@ async def journal_detail(request: Request, date: str, svc: ServiceDep):
 
     return templates.TemplateResponse(
         "journal_detail.html",
-        {"request": request, "date": date, "content_html": content_html},
+        {
+            "request": request,
+            "date": date,
+            "content_html": content_html,
+            "active_page": "journal",
+        },
     )

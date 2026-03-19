@@ -24,6 +24,7 @@ async def dashboard(request: Request, svc: ServiceDep):
         {
             "request": request,
             "project": project,
+            "active_page": "dashboard",
             "task_counts": {
                 "total": len(tasks),
                 "not_started": status_counts.get("not_started", 0),

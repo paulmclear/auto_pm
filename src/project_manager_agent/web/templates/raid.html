@@ -2,21 +2,32 @@
 {% block title %}RAID Log{% endblock %}
 {% block content %}
 <h1>RAID Log</h1>
-<table>
-    <thead>
-        <tr><th>ID</th><th>Type</th><th>Title</th><th>Owner</th><th>Raised</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-        {% for item in items %}
-        <tr>
-            <td>{{ item.raid_id }}</td>
-            <td>{{ item.type | capitalize }}</td>
-            <td>{{ item.title }}</td>
-            <td>{{ item.owner }}</td>
-            <td>{{ item.raised_date }}</td>
-            <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+<div x-data="{ tab: 'all' }">
+    <div class="filter-bar">
+        <button @click="tab = 'all'" :class="tab === 'all' ? '' : 'outline'">All</button>
+        <button @click="tab = 'risk'" :class="tab === 'risk' ? '' : 'outline'">Risks</button>
+        <button @click="tab = 'assumption'" :class="tab === 'assumption' ? '' : 'outline'">Assumptions</button>
+        <button @click="tab = 'issue'" :class="tab === 'issue' ? '' : 'outline'">Issues</button>
+        <button @click="tab = 'decision'" :class="tab === 'decision' ? '' : 'outline'">Decisions</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Type</th><th>Title</th><th>Owner</th><th>Raised</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr x-show="tab === 'all' || tab === '{{ item.type }}'">
+                <td>{{ item.raid_id }}</td>
+                <td>{{ item.type | capitalize }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.owner }}</td>
+                <td>{{ item.raised_date }}</td>
+                <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

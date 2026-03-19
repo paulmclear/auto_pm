@@ -15,5 +15,5 @@ async def raid_list(request: Request, svc: ServiceDep):
     items = svc.read_raid()
     return templates.TemplateResponse(
         "raid.html",
-        {"request": request, "items": items},
+        {"request": request, "items": items, "active_page": "raid"},
     )

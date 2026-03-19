@@ -15,5 +15,5 @@ async def task_list(request: Request, svc: ServiceDep):
     tasks = svc.read_tasks()
     return templates.TemplateResponse(
         "tasks.html",
-        {"request": request, "tasks": tasks},
+        {"request": request, "tasks": tasks, "active_page": "tasks"},
     )

@@ -2,21 +2,32 @@
 {% block title %}Tasks{% endblock %}
 {% block content %}
 <h1>Tasks</h1>
-<table>
-    <thead>
-        <tr><th>ID</th><th>Description</th><th>Owner</th><th>Due Date</th><th>Status</th><th>Blocked</th></tr>
-    </thead>
-    <tbody>
-        {% for t in tasks %}
-        <tr>
-            <td>{{ t.task_id }}</td>
-            <td>{{ t.description }}</td>
-            <td>{{ t.owner_name }}</td>
-            <td>{{ t.due_date }}</td>
-            <td><span class="badge badge-{{ t.status }}">{{ t.status | replace("_", " ") }}</span></td>
-            <td>{{ t.blocked_reason or "—" }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+<div x-data="{ filter: 'all' }">
+    <div class="filter-bar">
+        <button @click="filter = 'all'" :class="filter === 'all' ? '' : 'outline'">All</button>
+        <button @click="filter = 'not_started'" :class="filter === 'not_started' ? '' : 'outline'">Not Started</button>
+        <button @click="filter = 'in_progress'" :class="filter === 'in_progress' ? '' : 'outline'">In Progress</button>
+        <button @click="filter = 'complete'" :class="filter === 'complete' ? '' : 'outline'">Complete</button>
+        <button @click="filter = 'blocked'" :class="filter === 'blocked' ? '' : 'outline'">Blocked</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Description</th><th>Owner</th><th>Due Date</th><th>Status</th><th>Blocked</th></tr>
+        </thead>
+        <tbody>
+            {% for t in tasks %}
+            <tr x-show="filter === 'all' || filter === '{{ t.status }}'">
+                <td>{{ t.task_id }}</td>
+                <td>{{ t.description }}</td>
+                <td>{{ t.owner_name }}</td>
+                <td>{{ t.due_date }}</td>
+                <td><span class="badge badge-{{ t.status }}">{{ t.status | replace("_", " ") }}</span></td>
+                <td>{{ t.blocked_reason or "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
