@@ -22,6 +22,7 @@ Run from the project root:
     python -m project_manager_agent.agents.project_manager.agent
 """
 
+from pathlib import Path
 from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
@@ -32,14 +33,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from project_manager_agent.core.date_utils import advance_reference_date
-from project_manager_agent.core.repositories import (
-    Mailbox,
-    Journal,
-    TasksRepo,
-    ProjectRepo,
-    RaidRepo,
-    ActionsRepo,
-)
+from project_manager_agent.core.db.engine import create_tables
 from .tools import tools
 from .prompt import PM_SYSTEM_PROMPT
 
@@ -103,12 +97,10 @@ def build_graph():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    Mailbox().initialise()
-    Journal().initialise()
-    TasksRepo().initialise()
-    ProjectRepo().initialise()
-    RaidRepo().initialise()
-    ActionsRepo().initialise()
+    DATA_DIR = Path(__file__).resolve().parents[4] / "data"
+    JOURNAL_DIR = DATA_DIR / "journal"
+    JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
+    create_tables()
 
     graph = build_graph()
     graph.invoke(
