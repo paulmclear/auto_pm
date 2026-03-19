@@ -41,21 +41,17 @@ Not agentic — a straight LLM call. `context.py` reads all data sources and for
 ### Simulated Time (`core/date_utils.py`)
 `REFERENCE_DATE` is loaded at import time from `data/date.json`. It is **not** real time. After each agent run, `advance_reference_date()` increments it by one day. To jump to a specific date, edit `data/date.json` directly: `{"reference_date": "2026-03-20"}`.
 
-### Data Layer (`core/repositories.py`)
-All state is stored as flat JSON/JSONL files under `data/`:
+### Data Layer (`core/db/` + `core/services.py`)
+All state is stored in a SQLite database (`data/project_manager.db`) with SQL repositories under `core/db/repositories.py`. The `ProjectService` facade (`core/services.py`) owns the DB session and provides a single entry point for all data access.
 
-| File | Repository | Notes |
-|------|-----------|-------|
-| `data/tasks.json` | `TasksRepo` | List of `Task` dataclass dicts |
-| `data/project.json` | `ProjectRepo` | Single project with nested phases + milestones |
-| `data/raid.json` | `RaidRepo` | RAID log; type-specific optional fields are null for irrelevant types |
-| `data/actions.json` | `ActionsRepo` | Action items linked to RAID items or tasks |
-| `data/inbox/messages.jsonl` | `Mailbox` | Append-only JSONL; simulates replies from task owners |
-| `data/outbox/messages.jsonl` | `Mailbox` | Append-only JSONL; messages sent by the agent |
-| `data/journal/YYYY-MM-DD.md` | `Journal` | One markdown file per reference date |
-| `data/date.json` | `date_utils` | Persists `REFERENCE_DATE` |
+| Data | Storage | Notes |
+|------|---------|-------|
+| Tasks, Project, RAID, Actions, Messages | `data/project_manager.db` | SQLAlchemy ORM via `core/db/` |
+| Journal entries | `data/journal/YYYY-MM-DD.md` | `FileJournalRepository` (markdown on disk) |
+| Reports | `data/reports/*.md` | Generated markdown files |
+| Simulated date | `data/date.json` | Persists `REFERENCE_DATE` |
 
-Repos are instantiated fresh on each call (no shared state). All repos have an `initialise()` method that seeds sample data if the file doesn't exist.
+Tables are created via `create_tables()` from `core/db/engine.py`. Demo data is seeded via `seed_demo_data(session)` from `core/db/seed.py`.
 
 ### Models (`core/models.py`)
 Pure Python `dataclass` definitions: `Task`, `Phase`, `Milestone`, `Project`, `RaidItem`, `Action`. Dates are `dt.date` objects. `JsonSerialiser` extends `json.JSONEncoder` to handle `dt.date` → ISO string.
