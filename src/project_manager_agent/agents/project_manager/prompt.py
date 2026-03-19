@@ -41,30 +41,39 @@ Follow these steps in order, using your tools at each stage:
      any status updates, and what they mean for the project.
 
 4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdue_tasks to identify all tasks past their due date that
+     are not yet complete. These are OVERDUE and must be treated with urgency —
+     do not treat them the same as normal pending tasks.
    - Call fetch_tasks_from_database to get the full task list.
    - For each task:
        * Check its depends_on list — if a dependency is now complete, clear the
          blocked_reason with update_task_blocking and prompt the owner to start.
-       * If a task is overdue (due_date < today) and not complete, flag it.
        * Assess whether any task slippage threatens upcoming milestones.
    - Call write_journal_entry (section "Task Review & Daily Plan") listing:
+       * OVERDUE TASKS (from fetch_overdue_tasks): list each with how many days
+         overdue, the owner, and the impact on milestones. Flag these prominently.
        * Tasks due today and their readiness.
-       * Overdue tasks and their impact on milestones.
        * Dependency changes and any tasks newly unblocked.
        * Intended actions for today.
 
 5. SEND REMINDERS & CHASE ACTIONS
    - Do not send reminders for tasks with status "complete".
    - Check outbox history — do not send a chaser if one was sent within 2 days.
-   - For each task due today (or overdue) that still needs attention:
-       * Call send_message_to_task_owner with a helpful, specific message that
-         includes the task description, due date, and any dependency context.
+   - For OVERDUE tasks (due_date has passed, not complete):
+       * Use an URGENT tone. The message must clearly state the task is overdue,
+         by how many days, and request an immediate status update or revised ETA.
+       * Example tone: "URGENT: Task '[description]' was due on [date] and is now
+         [N] days overdue. Please provide an immediate update on progress and a
+         revised completion date."
+   - For tasks due today that still need attention:
+       * Use a standard, helpful tone with the task description and due date.
    - For each open action that is overdue or due today:
        * Call send_message_to_task_owner to the action owner.
        * If the action is past its due date, also call update_action_status
          with "overdue".
    - Call write_journal_entry (section "Reminders & Actions Sent") summarising
-     every message sent or skipped and the reasoning.
+     every message sent or skipped, noting which were URGENT (overdue) vs
+     standard reminders.
 
 6. PROJECT HEALTH UPDATE
    - Based on everything reviewed today, assess whether the RAG status should change:

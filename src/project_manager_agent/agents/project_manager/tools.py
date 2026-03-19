@@ -49,6 +49,19 @@ def fetch_tasks() -> list[dict]:
         svc.close()
 
 
+def fetch_overdue_tasks() -> list[dict]:
+    """Return tasks whose due_date is before REFERENCE_DATE and status is not complete."""
+    svc = ProjectService()
+    try:
+        tasks = svc.read_tasks()
+        overdue = [
+            t for t in tasks if t.due_date < REFERENCE_DATE and t.status != "complete"
+        ]
+        return [_serialize(t) for t in overdue]
+    finally:
+        svc.close()
+
+
 def read_last_journal() -> str:
     svc = ProjectService()
     try:
@@ -447,6 +460,16 @@ fetch_tasks_tool = Tool(
     func=lambda _: fetch_tasks(),
 )
 
+fetch_overdue_tasks_tool = Tool(
+    name="fetch_overdue_tasks",
+    description=(
+        "Fetch tasks that are past their due date and not yet complete. "
+        "These are overdue and require urgent attention — use this to "
+        "identify tasks needing escalated reminders."
+    ),
+    func=lambda _: fetch_overdue_tasks(),
+)
+
 fetch_inbox_tool = Tool(
     name="fetch_inbox_messages",
     description="Read all messages received in the inbox from task owners.",
@@ -588,6 +611,7 @@ tools = [
     fetch_outbox_tool,
     fetch_inbox_tool,
     fetch_tasks_tool,
+    fetch_overdue_tasks_tool,
     fetch_project_plan_tool,
     fetch_raid_items_tool,
     fetch_actions_tool,
