@@ -8,22 +8,20 @@ the report-generation LLM.
 import datetime as dt
 
 from project_manager_agent.core.date_utils import REFERENCE_DATE
-from project_manager_agent.core.repositories import (
-    TasksRepo,
-    ProjectRepo,
-    RaidRepo,
-    ActionsRepo,
-    Journal,
-)
+from project_manager_agent.core.services import ProjectService
 
 
 def load_all() -> dict:
     """Read all data sources and return a single context dict."""
-    project = ProjectRepo().read()
-    tasks = TasksRepo().read()
-    raid = RaidRepo().read()
-    actions = ActionsRepo().read()
-    journal = Journal().read_last()
+    svc = ProjectService()
+    try:
+        project = svc.read_project()
+        tasks = svc.read_tasks()
+        raid = svc.read_raid()
+        actions = svc.read_actions()
+        journal = svc.read_last_journal()
+    finally:
+        svc.close()
 
     complete = [t for t in tasks if t.status == "complete"]
     blocked = [t for t in tasks if t.status == "blocked"]
@@ -35,26 +33,21 @@ def load_all() -> dict:
         if t.status not in ("complete",) and t.due_date < REFERENCE_DATE
     ]
 
-    open_risks = [r for r in raid if r["type"] == "risk" and r["status"] == "open"]
-    open_issues = [r for r in raid if r["type"] == "issue" and r["status"] == "open"]
+    open_risks = [r for r in raid if r.type == "risk" and r.status == "open"]
+    open_issues = [r for r in raid if r.type == "issue" and r.status == "open"]
     open_assumptions = [
-        r for r in raid if r["type"] == "assumption" and r["status"] == "open"
+        r for r in raid if r.type == "assumption" and r.status == "open"
     ]
-    decisions = [r for r in raid if r["type"] == "decision"]
+    decisions = [r for r in raid if r.type == "decision"]
 
     overdue_actions = [
-        a
-        for a in actions
-        if a["status"] == "open"
-        and dt.date.fromisoformat(a["due_date"]) < REFERENCE_DATE
+        a for a in actions if a.status == "open" and a.due_date < REFERENCE_DATE
     ]
     due_soon_actions = [
         a
         for a in actions
-        if a["status"] == "open"
-        and REFERENCE_DATE
-        <= dt.date.fromisoformat(a["due_date"])
-        <= REFERENCE_DATE + dt.timedelta(days=7)
+        if a.status == "open"
+        and REFERENCE_DATE <= a.due_date <= REFERENCE_DATE + dt.timedelta(days=7)
     ]
 
     return {
@@ -84,32 +77,31 @@ def format_context(ctx: dict) -> str:
         f"TODAY: {REFERENCE_DATE}",
         "",
         "=== PROJECT ===",
-        f"Name:           {p['name']}",
-        f"Description:    {p['description']}",
-        f"Sponsor:        {p['sponsor']}",
-        f"Planned end:    {p['planned_end']}",
-        f"Forecast end:   {p['forecast_end']}",
-        f"RAG status:     {p['rag_status'].upper()}",
-        f"RAG reason:     {p['rag_reason']}",
+        f"Name:           {p.name}",
+        f"Description:    {p.description}",
+        f"Sponsor:        {p.sponsor}",
+        f"Planned end:    {p.planned_end}",
+        f"Forecast end:   {p.forecast_end}",
+        f"RAG status:     {p.rag_status.upper()}",
+        f"RAG reason:     {p.rag_reason}",
         "",
         "Objectives:",
-        *[f"  - {o}" for o in p.get("objectives", [])],
+        *[f"  - {o}" for o in p.objectives],
         "",
         "=== PHASES ===",
         *[
-            f"  Phase {ph['phase_id']}: {ph['name']} "
-            f"({ph['planned_start']} → {ph['planned_end']})"
-            for ph in p.get("phases", [])
+            f"  Phase {ph.phase_id}: {ph.name} ({ph.planned_start} → {ph.planned_end})"
+            for ph in p.phases
         ],
         "",
         "=== MILESTONES ===",
         *[
-            f"  M{m['milestone_id']}: {m['name']} | "
-            f"Planned: {m['planned_date']} | Forecast: {m['forecast_date']} | "
-            f"Status: {m['status']} | "
-            f"Actual: {m.get('actual_date') or 'n/a'} | "
-            f"Gates on tasks: {m['linked_task_ids']}"
-            for m in p.get("milestones", [])
+            f"  M{m.milestone_id}: {m.name} | "
+            f"Planned: {m.planned_date} | Forecast: {m.forecast_date} | "
+            f"Status: {m.status} | "
+            f"Actual: {m.actual_date or 'n/a'} | "
+            f"Gates on tasks: {m.linked_task_ids}"
+            for m in p.milestones
         ],
         "",
         "=== TASKS ===",
@@ -132,9 +124,9 @@ def format_context(ctx: dict) -> str:
         "=== RISKS (open) ===",
         *(
             [
-                f"  R{r['raid_id']}: [{r.get('probability', '?').upper()} prob / "
-                f"{r.get('impact', '?').upper()} impact] {r['title']} — "
-                f"owner: {r['owner']} | mitigation: {r.get('mitigation', 'none')}"
+                f"  R{r.raid_id}: [{(r.probability or '?').upper()} prob / "
+                f"{(r.impact or '?').upper()} impact] {r.title} — "
+                f"owner: {r.owner} | mitigation: {r.mitigation or 'none'}"
                 for r in ctx["open_risks"]
             ]
             or ["  None"]
@@ -143,9 +135,9 @@ def format_context(ctx: dict) -> str:
         "=== ISSUES (open) ===",
         *(
             [
-                f"  I{r['raid_id']}: [severity: {r.get('severity', '?').upper()}] "
-                f"{r['title']} — owner: {r['owner']} | "
-                f"resolution: {r.get('resolution') or 'none yet'}"
+                f"  I{r.raid_id}: [severity: {(r.severity or '?').upper()}] "
+                f"{r.title} — owner: {r.owner} | "
+                f"resolution: {r.resolution or 'none yet'}"
                 for r in ctx["open_issues"]
             ]
             or ["  None"]
@@ -154,11 +146,11 @@ def format_context(ctx: dict) -> str:
         "=== ASSUMPTIONS (open, unvalidated) ===",
         *(
             [
-                f"  A{r['raid_id']}: {r['title']} — "
-                f"validate by: {r.get('validation_date', '?')} | "
-                f"method: {r.get('validation_method', '?')}"
+                f"  A{r.raid_id}: {r.title} — "
+                f"validate by: {r.validation_date or '?'} | "
+                f"method: {r.validation_method or '?'}"
                 for r in ctx["open_assumptions"]
-                if not r.get("validated_by")
+                if not r.validated_by
             ]
             or ["  None"]
         ),
@@ -166,8 +158,8 @@ def format_context(ctx: dict) -> str:
         "=== DECISIONS ===",
         *(
             [
-                f"  D{r['raid_id']}: {r['title']} — decided by: "
-                f"{r.get('decided_by', '?')} on {r.get('decision_date', '?')}"
+                f"  D{r.raid_id}: {r.title} — decided by: "
+                f"{r.decided_by or '?'} on {r.decision_date or '?'}"
                 for r in ctx["decisions"]
             ]
             or ["  None"]
@@ -175,11 +167,11 @@ def format_context(ctx: dict) -> str:
         "",
         "=== ACTIONS ===",
         *[
-            f"  [{a['status'].upper()}] Action {a['action_id']}: "
-            f"{a['description']} — owner: {a['owner_name']}, "
-            f"due: {a['due_date']}"
+            f"  [{a.status.upper()}] Action {a.action_id}: "
+            f"{a.description} — owner: {a.owner_name}, "
+            f"due: {a.due_date}"
             + (" [OVERDUE]" if a in ctx["overdue_actions"] else "")
-            + (f" [from RAID {a['source_raid_id']}]" if a.get("source_raid_id") else "")
+            + (f" [from RAID {a.source_raid_id}]" if a.source_raid_id else "")
             for a in ctx["all_actions"]
         ],
         "",
