@@ -13,6 +13,18 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-19 - pm-609.7
+- Created `core/db/seed.py` with `seed_demo_data(session: Session)` function
+- Ports all demo data from `create_demo_data.py` to ORM objects: 1 project, 3 phases, 3 milestones, 11 tasks, 7 RAID items, 3 actions, 3 messages
+- Also seeds journal markdown files for 2026-03-18 and 2026-03-19 via `_seed_journals()` helper
+- Verified with in-memory SQLite: all counts match original demo data
+- Files changed: `src/project_manager_agent/core/db/seed.py` (new)
+- **Learnings:**
+  - `session.flush()` after adding the project row is needed to populate `project.id` before creating phases/milestones with FK references
+  - JSON list fields (depends_on, linked_task_ids, objectives) must be `json.dumps()`-ed before assignment to Text columns
+  - Outbound messages need sender_name/sender_email for the agent — used "Project Manager Agent" / "pm-agent@test.com"
+---
+
 ## 2026-03-19 - pm-609.8
 - Updated pyproject.toml: added `sqlalchemy>=2.0` to dependencies, `pytest>=8.0` to dev dependencies, and `[tool.setuptools.packages.find] where = ["src"]` for src/ layout
 - Files changed: `pyproject.toml`, `uv.lock`
