@@ -26,23 +26,57 @@ uv run ruff format .
 
 ## Architecture
 
-This is a **LangGraph-based AI project management agent** with two independent sub-agents:
+This is a **LangGraph-based AI project management agent** with two independent sub-agents.
 
-### Project Manager Agent (`src/project_manager_agent/agents/project_manager/`)
+### Source Layout
+
+All application code lives under `src/project_manager_agent/` in two packages:
+
+```
+src/project_manager_agent/
+├── core/               # Shared domain logic, models, and data access
+│   ├── models.py       # Dataclass definitions (Task, Project, RaidItem, etc.)
+│   ├── services.py     # ProjectService facade — single entry point for all data access
+│   ├── date_utils.py   # Simulated date (REFERENCE_DATE) management
+│   ├── protocols.py    # Repository protocol/interface definitions
+│   └── db/             # SQLite persistence layer
+│       ├── engine.py   # SQLAlchemy engine, SessionFactory, create_tables()
+│       ├── orm.py      # ORM table models
+│       ├── repositories.py  # SQL repository implementations
+│       └── seed.py     # Demo data seeding
+└── agents/             # LLM-powered agents
+    ├── project_manager/  # Daily-loop PM agent (LangGraph)
+    │   ├── agent.py    # Graph definition + __main__ entry point
+    │   ├── prompt.py   # System prompt
+    │   └── tools.py    # LangChain tool definitions
+    └── reporter/       # Status report generator (single LLM call)
+        ├── agent.py    # Report generation + __main__ entry point
+        ├── prompt.py   # System prompt
+        └── context.py  # Reads all data sources into a prompt string
+```
+
+### Service Layer (`core/services.py`)
+`ProjectService` is the **facade** for all data access. It owns the DB session (via `SessionFactory`), instantiates all SQL repositories and the `FileJournalRepository`, and exposes thin delegation methods. All tool functions and the reporter context loader create a `ProjectService` instance with try/finally to ensure `svc.close()` is called.
+
+### Project Manager Agent (`agents/project_manager/`)
 Runs a structured daily loop via a two-node LangGraph graph:
 - `project-manager` node — LLM (gpt-4o-mini) that decides which tools to call
 - `tools` node — executes chosen tools via `langgraph.prebuilt.ToolNode`
 
 The agent follows a fixed sequence: read journal → review project plan → review RAID log → read inbox → review tasks → send reminders → update health → write journal. All logic is driven by the LLM using the tool set defined in `tools.py`.
 
-### Reporter Agent (`src/project_manager_agent/agents/reporter/`)
-Not agentic — a straight LLM call. `context.py` reads all data sources and formats them into a prompt string; `reporter/agent.py` sends this to the LLM and writes the markdown report to `data/reports/`.
+### Reporter Agent (`agents/reporter/`)
+Not agentic — a straight LLM call. `context.py` uses `ProjectService` to read all data sources and formats them into a prompt string; `agent.py` sends this to the LLM and writes the markdown report to `data/reports/`.
 
 ### Simulated Time (`core/date_utils.py`)
 `REFERENCE_DATE` is loaded at import time from `data/date.json`. It is **not** real time. After each agent run, `advance_reference_date()` increments it by one day. To jump to a specific date, edit `data/date.json` directly: `{"reference_date": "2026-03-20"}`.
 
-### Data Layer (`core/db/` + `core/services.py`)
-All state is stored in a SQLite database (`data/project_manager.db`) with SQL repositories under `core/db/repositories.py`. The `ProjectService` facade (`core/services.py`) owns the DB session and provides a single entry point for all data access.
+### Data Layer (`core/db/`)
+All state is stored in a SQLite database (`data/project_manager.db`). The `core/db/` sub-package contains:
+- **`engine.py`** — SQLAlchemy engine, `SessionFactory`, `get_session()` context manager, `create_tables()`
+- **`orm.py`** — ORM table models mapped to SQLAlchemy
+- **`repositories.py`** — SQL repository classes (`TasksRepo`, `ProjectRepo`, `RaidRepo`, `ActionsRepo`, `Mailbox`)
+- **`seed.py`** — `seed_demo_data(session)` populates the DB with the demo scenario
 
 | Data | Storage | Notes |
 |------|---------|-------|
@@ -51,13 +85,11 @@ All state is stored in a SQLite database (`data/project_manager.db`) with SQL re
 | Reports | `data/reports/*.md` | Generated markdown files |
 | Simulated date | `data/date.json` | Persists `REFERENCE_DATE` |
 
-Tables are created via `create_tables()` from `core/db/engine.py`. Demo data is seeded via `seed_demo_data(session)` from `core/db/seed.py`.
-
 ### Models (`core/models.py`)
 Pure Python `dataclass` definitions: `Task`, `Phase`, `Milestone`, `Project`, `RaidItem`, `Action`. Dates are `dt.date` objects. `JsonSerialiser` extends `json.JSONEncoder` to handle `dt.date` → ISO string.
 
 ### Tools (`agents/project_manager/tools.py`)
-Plain functions wrapped with `langchain_core.tools.Tool` (for zero-arg tools using `lambda _:`) or `StructuredTool` + Pydantic input schema (for multi-arg tools). The `tools` list at the bottom is what gets bound to the LLM.
+Plain functions wrapped with `langchain_core.tools.Tool` (for zero-arg tools using `lambda _:`) or `StructuredTool` + Pydantic input schema (for multi-arg tools). Each tool function creates its own `ProjectService` instance for data access. The `tools` list at the bottom is what gets bound to the LLM.
 
 ## Backlog
 
