@@ -10,9 +10,14 @@ dependencies = [
     "langgraph>=1.1.2",
     "langsmith>=0.7.20",
     "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0",
 ]
 
 [dependency-groups]
 dev = [
+    "pytest>=8.0",
     "ruff>=0.15.6",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
