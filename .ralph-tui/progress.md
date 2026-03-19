@@ -54,6 +54,16 @@ after each iteration and it's included in prompts for context.
   - `create_all()` is inherently idempotent — uses `checkfirst=True` by default
 ---
 
+## 2026-03-19 - pm-609.3
+- Created `core/protocols.py` with 6 `typing.Protocol` classes: `TaskRepository`, `ProjectRepository`, `RaidRepository`, `ActionRepository`, `MessageRepository`, `JournalRepository`
+- All methods return typed domain objects (not raw dicts) — key difference from existing JSON repos which return `dict` for project/RAID/actions
+- Protocol signatures use proper types: `dt.date` instead of `str` for dates, `RagStatus`/`MilestoneStatus` literals instead of `str`, `RaidItem`/`Action` objects instead of `dict` for add methods
+- Files changed: `src/project_manager_agent/core/protocols.py` (new)
+- **Learnings:**
+  - `from __future__ import annotations` needed for forward-ref-friendly Protocol definitions
+  - Existing JSON repos don't yet conform to these protocols (e.g. `ProjectRepo.read()` returns `dict`, not `Project`) — SQL implementations will be the first to satisfy them
+---
+
 ## 2026-03-19 - pm-609.4
 - Created `core/db/__init__.py` and `core/db/orm.py` with SQLAlchemy 2.0 declarative ORM models
 - 7 tables: `projects`, `phases` (FK→projects), `milestones` (FK→projects), `tasks`, `raid_items`, `actions`, `messages`
