@@ -62,6 +62,29 @@ def fetch_overdue_tasks() -> list[dict]:
         svc.close()
 
 
+def fetch_upcoming_due_tasks(lead_days: int = 2) -> list[dict]:
+    """Return incomplete tasks whose due_date is within the next *lead_days* days.
+
+    Only includes tasks that are NOT already overdue (due_date >= REFERENCE_DATE)
+    and NOT complete.  Each result includes a 'days_until_due' field.
+    """
+    svc = ProjectService()
+    try:
+        tasks = svc.read_tasks()
+        horizon = REFERENCE_DATE + dt.timedelta(days=lead_days)
+        upcoming = []
+        for t in tasks:
+            if t.status == "complete":
+                continue
+            if REFERENCE_DATE <= t.due_date <= horizon:
+                d = _serialize(t)
+                d["days_until_due"] = (t.due_date - REFERENCE_DATE).days
+                upcoming.append(d)
+        return upcoming
+    finally:
+        svc.close()
+
+
 def fetch_dependency_blocked_tasks() -> list[dict]:
     """Return tasks whose depends_on list contains at least one incomplete upstream task.
 
@@ -366,6 +389,10 @@ def update_action_status(action_id: int, status: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+class FetchUpcomingDueTasksInput(BaseModel):
+    lead_days: int = 2
+
+
 class UpdateTaskStatusInput(BaseModel):
     task_id: int
     status: Literal["not_started", "in_progress", "complete", "blocked"]
@@ -507,6 +534,18 @@ fetch_dependency_blocked_tasks_tool = Tool(
         "tasks — they cannot proceed until their dependencies finish."
     ),
     func=lambda _: fetch_dependency_blocked_tasks(),
+)
+
+fetch_upcoming_due_tasks_tool = StructuredTool(
+    name="fetch_upcoming_due_tasks",
+    description=(
+        "Fetch incomplete tasks whose due date falls within the next N days "
+        "(default 2). Use this to send advance warning reminders BEFORE a task "
+        "becomes due. Each result includes a 'days_until_due' field. Does not "
+        "include tasks that are already overdue or complete."
+    ),
+    func=fetch_upcoming_due_tasks,
+    args_schema=FetchUpcomingDueTasksInput,
 )
 
 fetch_inbox_tool = Tool(
@@ -652,6 +691,7 @@ tools = [
     fetch_tasks_tool,
     fetch_overdue_tasks_tool,
     fetch_dependency_blocked_tasks_tool,
+    fetch_upcoming_due_tasks_tool,
     fetch_project_plan_tool,
     fetch_raid_items_tool,
     fetch_actions_tool,

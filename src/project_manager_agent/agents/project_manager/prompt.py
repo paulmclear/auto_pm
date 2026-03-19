@@ -44,6 +44,9 @@ Follow these steps in order, using your tools at each stage:
    - Call fetch_overdue_tasks to identify all tasks past their due date that
      are not yet complete. These are OVERDUE and must be treated with urgency —
      do not treat them the same as normal pending tasks.
+   - Call fetch_upcoming_due_tasks (default lead_days=2) to identify tasks
+     approaching their due date within the next 2 days. These need advance
+     warning reminders — a friendly heads-up so owners can prepare.
    - Call fetch_dependency_blocked_tasks to identify tasks whose upstream
      dependencies are not yet complete. These tasks CANNOT proceed and must
      NOT receive reminders — they are blocked by dependency, not by the owner.
@@ -70,6 +73,8 @@ Follow these steps in order, using your tools at each stage:
        * DEPENDENCY-BLOCKED TASKS (from fetch_dependency_blocked_tasks): list each
          with which upstream task_ids are blocking it. Do NOT treat these as
          actionable by their owners — the blocker is the upstream task.
+       * UPCOMING DUE TASKS (from fetch_upcoming_due_tasks): list tasks due
+         within the next 2 days with days_until_due, priority, and owner.
        * Tasks due today and their readiness.
        * Dependency changes and any tasks newly unblocked.
        * Intended actions for today.
@@ -92,6 +97,14 @@ Follow these steps in order, using your tools at each stage:
        * Example (high): "CRITICAL: High-priority task '[description]' was due on
          [date] and is now [N] days overdue. This requires immediate attention —
          please provide a status update and revised completion date urgently."
+   - For UPCOMING tasks (due within the next 1-2 days, from fetch_upcoming_due_tasks):
+       * Do NOT send advance warnings for dependency-blocked tasks.
+       * Use a friendly, proactive heads-up tone — this is a courtesy reminder,
+         not a chase. Let the owner know their task is approaching its due date.
+       * HIGH priority upcoming: "Heads-up: Your high-priority task '[description]'
+         is due in [N] day(s) on [date]. Please ensure you're on track to deliver."
+       * MEDIUM/LOW priority upcoming: "Friendly reminder: Task '[description]'
+         is due in [N] day(s) on [date]. Let me know if you need anything."
    - For tasks due today that still need attention:
        * Use a standard, helpful tone with the task description and due date.
    - For each open action that is overdue or due today:
@@ -99,8 +112,8 @@ Follow these steps in order, using your tools at each stage:
        * If the action is past its due date, also call update_action_status
          with "overdue".
    - Call write_journal_entry (section "Reminders & Actions Sent") summarising
-     every message sent or skipped, noting which were URGENT (overdue) vs
-     standard reminders.
+     every message sent or skipped, noting which were URGENT (overdue),
+     ADVANCE WARNING (upcoming), or standard reminders.
 
 6. PROJECT HEALTH UPDATE
    - Based on everything reviewed today, assess whether the RAG status should change.
