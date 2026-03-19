@@ -3,10 +3,10 @@
   "sessionId": "b33050d5-c5ec-4a7d-80b0-5e5923d5377f",
   "status": "running",
   "startedAt": "2026-03-19T09:50:57.939Z",
-  "updatedAt": "2026-03-19T10:02:10.972Z",
-  "currentIteration": 3,
+  "updatedAt": "2026-03-19T10:03:16.370Z",
+  "currentIteration": 4,
   "maxIterations": 10,
-  "tasksCompleted": 3,
+  "tasksCompleted": 4,
   "isPaused": false,
   "agentPlugin": "claude",
   "model": "opus",
@@ -36,8 +36,8 @@
       {
         "id": "pm-609.4",
         "title": "Create SQLAlchemy ORM table models in core/db/orm.py",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "pm-609.5",
@@ -101,6 +101,16 @@
       "durationMs": 91498,
       "startedAt": "2026-03-19T09:59:03.715Z",
       "endedAt": "2026-03-19T10:00:35.213Z"
+    },
+    {
+      "iteration": 4,
+      "status": "completed",
+      "taskId": "pm-609.4",
+      "taskTitle": "Create SQLAlchemy ORM table models in core/db/orm.py",
+      "taskCompleted": true,
+      "durationMs": 93183,
+      "startedAt": "2026-03-19T10:00:37.310Z",
+      "endedAt": "2026-03-19T10:02:10.493Z"
     }
   ],
   "skippedTaskIds": [],

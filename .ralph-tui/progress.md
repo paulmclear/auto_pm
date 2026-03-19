@@ -43,6 +43,17 @@ after each iteration and it's included in prompts for context.
   - ruff format auto-splits long import lines into multi-line format
 ---
 
+## 2026-03-19 - pm-609.5
+- Created `core/db/engine.py` with SQLAlchemy engine, `SessionFactory`, `get_session()` context manager, and `create_tables()` function
+- `DATABASE_URL` defaults to `sqlite:///data/project_manager.db` (path resolved relative to the engine.py file location)
+- `get_session()` yields a transactional session: auto-commits on success, rolls back on error
+- `create_tables()` calls `Base.metadata.create_all()` — idempotent (safe to call repeatedly)
+- Files changed: `src/project_manager_agent/core/db/engine.py` (new)
+- **Learnings:**
+  - `Path(__file__).resolve().parents[4]` navigates from `core/db/engine.py` up to project root reliably
+  - `create_all()` is inherently idempotent — uses `checkfirst=True` by default
+---
+
 ## 2026-03-19 - pm-609.4
 - Created `core/db/__init__.py` and `core/db/orm.py` with SQLAlchemy 2.0 declarative ORM models
 - 7 tables: `projects`, `phases` (FK→projects), `milestones` (FK→projects), `tasks`, `raid_items`, `actions`, `messages`

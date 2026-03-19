@@ -1,0 +1,64 @@
+# Iteration 4 Log
+
+## Metadata
+
+- **Task ID**: pm-609.4
+- **Task Title**: Create SQLAlchemy ORM table models in core/db/orm.py
+- **Description**: Create core/db/orm.py with SQLAlchemy 2.0 declarative ORM models mapping to SQL tables. Tables: tasks, projects (single row), phases (FK to projects), milestones (FK to projects), raid_items (flat wit...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:00:37.310Z
+- **Ended At**: 2026-03-19T10:02:10.493Z
+- **Duration**: 1m 33s
+- **Input Tokens**: 41
+- **Output Tokens**: 4792
+- **Total Tokens**: 4833
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-609
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me start by studying the existing models and progress file.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/core/db/**/*.py[0m
+Now let me create the `db` package and the ORM models.
+[94m[Bash][0m List core directory contents $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/__init__.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m """"SQLAlchemy 2.0 declarative ORM models for the project-manager database."""
+
+import datetime as dt
+
+from sqlalchemy import (
+    Date,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlal... (8217 chars)"
+Now let me run lint and verify the import works.
+[94m[Bash][0m Lint and verify ORM imports $ print('Tables:', [t for t in Base.metadata.tables])"
+All 7 tables created and verified. Now let me close the bead and update progress.
+[94m[Bash][0m Close bead pm-609.4 $ bd close pm-609.4 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "- **src/ layout**: Package lives at `src/project_m..." → "- **src/ layout**: Package lives at `src/project_m..."
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - ruff format auto-splits long import lines into..." → "  - ruff format auto-splits long import lines into..."
+<promise>COMPLETE</promise>
+
+**Summary:** Created `src/project_manager_agent/core/db/orm.py` with a shared `Base` and 7 ORM model classes:
+
+| Table | ORM Class | Notes |
+|-------|-----------|-------|
+| `projects` | `ProjectRow` | Single-row; `objectives` as JSON Text |
+| `phases` | `PhaseRow` | FK → `projects.id` |
+| `milestones` | `MilestoneRow` | FK → `projects.id`; `linked_task_ids` as JSON Text |
+| `tasks` | `TaskRow` | `depends_on` as JSON Text |
+| `raid_items` | `RaidItemRow` | Flat with type-specific nullable columns |
+| `actions` | `ActionRow` | Optional FK refs to raid/task IDs |
+| `messages` | `MessageRow` | Replaces inbox/outbox JSONL |
+
+All models use SQLAlchemy 2.0 `Mapped`/`mapped_column` style. Lint passes, imports verified.
