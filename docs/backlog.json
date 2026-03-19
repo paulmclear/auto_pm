@@ -1,0 +1,106 @@
+[
+    {
+        "id": 1,
+        "title": "Task status field",
+        "description": "Add a status field to the Task model (not_started, in_progress, complete, blocked). Without this the agent can never record completion and will keep reminding owners indefinitely.",
+        "priority": "high",
+        "category": "task model",
+        "status": "complete"
+    },
+    {
+        "id": 2,
+        "title": "Update task status tool",
+        "description": "Give the agent a tool to mark tasks as complete, in_progress, or blocked. When an inbox message confirms completion the agent should update the task, not just note it in the journal.",
+        "priority": "high",
+        "category": "agent capability",
+        "status": "complete"
+    },
+    {
+        "id": 3,
+        "title": "Overdue task detection",
+        "description": "Detect tasks whose due_date has passed without completion. These should trigger escalation behaviour rather than a standard reminder.",
+        "priority": "high",
+        "category": "agent capability",
+        "status": "open"
+    },
+    {
+        "id": 4,
+        "title": "Per-task outbox tracking",
+        "description": "Tag each outbox message with a task_id so the chaser frequency check is per-task rather than per-person. Bob has two tasks — last-message-sent-to-Bob is too coarse.",
+        "priority": "high",
+        "category": "communication",
+        "status": "open"
+    },
+    {
+        "id": 5,
+        "title": "Task dependency model",
+        "description": "Add a depends_on field to Task. The agent should not chase an owner for a task whose dependency is incomplete, and should flag blocked tasks in the journal.",
+        "priority": "medium",
+        "category": "task model",
+        "status": "open"
+    },
+    {
+        "id": 6,
+        "title": "Priority field on tasks",
+        "description": "Add a priority field (high, medium, low) to the Task model so the agent can triage, escalate high-priority overdue tasks sooner, and tailor message tone.",
+        "priority": "medium",
+        "category": "task model",
+        "status": "open"
+    },
+    {
+        "id": 7,
+        "title": "Advance warning reminders",
+        "description": "Remind owners 1-2 days before a task is due, not just on the day. Warning lead time should be configurable.",
+        "priority": "medium",
+        "category": "agent capability",
+        "status": "open"
+    },
+    {
+        "id": 8,
+        "title": "Escalation logic",
+        "description": "If a task is N days overdue with no completion or response, send an escalation message to a separate recipient (e.g. a manager). N should be configurable.",
+        "priority": "medium",
+        "category": "agent capability",
+        "status": "open"
+    },
+    {
+        "id": 9,
+        "title": "Inbox intent parsing",
+        "description": "Extract structured intent from inbox messages: completion confirmation, blocker report, date change request, etc. Drive smarter decisions rather than treating all replies as raw text.",
+        "priority": "medium",
+        "category": "communication",
+        "status": "open"
+    },
+    {
+        "id": 10,
+        "title": "Weekly summary report",
+        "description": "Generate a weekly markdown summary across the week's journals: tasks completed, overdue, at risk. Write to data/reports/YYYY-Www.md.",
+        "priority": "low",
+        "category": "observability",
+        "status": "open"
+    },
+    {
+        "id": 11,
+        "title": "Status snapshot file",
+        "description": "Write a data/status.json on each run with a current snapshot of all task states so external tools and dashboards can consume it without parsing journals.",
+        "priority": "low",
+        "category": "observability",
+        "status": "open"
+    },
+    {
+        "id": 12,
+        "title": "Config file for thresholds",
+        "description": "Move hardcoded values (chaser frequency, advance warning days, escalation threshold) into a data/config.json file so behaviour can be tuned without editing code.",
+        "priority": "low",
+        "category": "robustness",
+        "status": "open"
+    },
+    {
+        "id": 13,
+        "title": "Idempotency guard",
+        "description": "Prevent double-sends and duplicate journal entries if the agent runs more than once in a day (e.g. after a crash and restart). Check whether today's loop has already completed before acting.",
+        "priority": "low",
+        "category": "robustness",
+        "status": "open"
+    }
+]
