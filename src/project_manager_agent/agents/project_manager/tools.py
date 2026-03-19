@@ -62,6 +62,34 @@ def fetch_overdue_tasks() -> list[dict]:
         svc.close()
 
 
+def fetch_dependency_blocked_tasks() -> list[dict]:
+    """Return tasks whose depends_on list contains at least one incomplete upstream task.
+
+    Each returned dict includes the task fields plus a 'blocking_tasks' list
+    showing which upstream task_ids are not yet complete.
+    """
+    svc = ProjectService()
+    try:
+        tasks = svc.read_tasks()
+        status_by_id = {t.task_id: t.status for t in tasks}
+        results = []
+        for t in tasks:
+            if t.status == "complete" or not t.depends_on:
+                continue
+            incomplete_deps = [
+                dep_id
+                for dep_id in t.depends_on
+                if status_by_id.get(dep_id) != "complete"
+            ]
+            if incomplete_deps:
+                d = _serialize(t)
+                d["blocking_tasks"] = incomplete_deps
+                results.append(d)
+        return results
+    finally:
+        svc.close()
+
+
 def read_last_journal() -> str:
     svc = ProjectService()
     try:
@@ -470,6 +498,17 @@ fetch_overdue_tasks_tool = Tool(
     func=lambda _: fetch_overdue_tasks(),
 )
 
+fetch_dependency_blocked_tasks_tool = Tool(
+    name="fetch_dependency_blocked_tasks",
+    description=(
+        "Fetch tasks that are blocked because one or more upstream dependencies "
+        "(depends_on) are not yet complete. Each result includes a 'blocking_tasks' "
+        "list of the incomplete upstream task_ids. Do NOT send reminders for these "
+        "tasks — they cannot proceed until their dependencies finish."
+    ),
+    func=lambda _: fetch_dependency_blocked_tasks(),
+)
+
 fetch_inbox_tool = Tool(
     name="fetch_inbox_messages",
     description="Read all messages received in the inbox from task owners.",
@@ -612,6 +651,7 @@ tools = [
     fetch_inbox_tool,
     fetch_tasks_tool,
     fetch_overdue_tasks_tool,
+    fetch_dependency_blocked_tasks_tool,
     fetch_project_plan_tool,
     fetch_raid_items_tool,
     fetch_actions_tool,

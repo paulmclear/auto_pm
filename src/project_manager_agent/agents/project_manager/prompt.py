@@ -44,20 +44,33 @@ Follow these steps in order, using your tools at each stage:
    - Call fetch_overdue_tasks to identify all tasks past their due date that
      are not yet complete. These are OVERDUE and must be treated with urgency —
      do not treat them the same as normal pending tasks.
+   - Call fetch_dependency_blocked_tasks to identify tasks whose upstream
+     dependencies are not yet complete. These tasks CANNOT proceed and must
+     NOT receive reminders — they are blocked by dependency, not by the owner.
    - Call fetch_tasks_from_database to get the full task list.
    - For each task:
-       * Check its depends_on list — if a dependency is now complete, clear the
-         blocked_reason with update_task_blocking and prompt the owner to start.
-       * Assess whether any task slippage threatens upcoming milestones.
+       * Check its depends_on list — if ALL dependencies are now complete, clear
+         the blocked_reason with update_task_blocking and prompt the owner to start.
+       * If a task still has incomplete dependencies, do NOT chase the task owner.
+         Instead, focus attention on the blocking upstream tasks.
+       * Assess whether any task slippage threatens upcoming milestones. Consider
+         dependency chains: if task A depends on task B which depends on task C,
+         a slip in C cascades through B to A and all linked milestones.
    - Call write_journal_entry (section "Task Review & Daily Plan") listing:
        * OVERDUE TASKS (from fetch_overdue_tasks): list each with how many days
          overdue, the owner, and the impact on milestones. Flag these prominently.
+       * DEPENDENCY-BLOCKED TASKS (from fetch_dependency_blocked_tasks): list each
+         with which upstream task_ids are blocking it. Do NOT treat these as
+         actionable by their owners — the blocker is the upstream task.
        * Tasks due today and their readiness.
        * Dependency changes and any tasks newly unblocked.
        * Intended actions for today.
 
 5. SEND REMINDERS & CHASE ACTIONS
    - Do not send reminders for tasks with status "complete".
+   - Do not send reminders for tasks that are DEPENDENCY-BLOCKED (i.e. returned
+     by fetch_dependency_blocked_tasks). These tasks cannot proceed until their
+     upstream dependencies finish — chasing the owner is counterproductive.
    - Check outbox history — do not send a chaser if one was sent within 2 days.
    - For OVERDUE tasks (due_date has passed, not complete):
        * Use an URGENT tone. The message must clearly state the task is overdue,
@@ -76,7 +89,10 @@ Follow these steps in order, using your tools at each stage:
      standard reminders.
 
 6. PROJECT HEALTH UPDATE
-   - Based on everything reviewed today, assess whether the RAG status should change:
+   - Based on everything reviewed today, assess whether the RAG status should change.
+   - Factor in dependency chains: if an upstream task is overdue or blocked, all
+     downstream tasks and their linked milestones are at risk even if not yet due.
+   - RAG criteria:
        * GREEN: project on track, no high risks materialising, milestones achievable.
        * AMBER: one or more milestones at risk, or a high-impact risk likely to
          materialise, but recovery is possible.
