@@ -20,6 +20,16 @@ after each iteration and it's included in prompts for context.
   - The src/ layout config is ready but the actual `src/` directory doesn't exist yet (pm-609.1 will create it)
 ---
 
+## 2026-03-19 - pm-609.2
+- Tightened `Project` type hints: `objectives` → `list[str]`, `phases` → `list[Phase]`, `milestones` → `list[Milestone]`
+- Added `MessageDirection` Literal type alias and `Message` dataclass with fields: message_id, direction, timestamp, owner_name, owner_email, message, sender_name, sender_email
+- Kept `JsonSerialiser` unchanged
+- Files changed: `src/project_manager_agent/core/models.py`
+- **Learnings:**
+  - Model file was already at the correct `core/models.py` location from pm-609.1, so no move was needed
+  - `objectives` was previously untyped `list` — now `list[str]` which matches how it's used in `project.json`
+---
+
 ## 2026-03-19 - pm-609.1
 - Restructured project from flat `project_manager_agent/` to `src/project_manager_agent/` with `core/`, `agents/project_manager/`, `agents/reporter/` sub-packages
 - All relative imports (`from ..models`, `from .date_utils`) converted to absolute imports (`from project_manager_agent.core.models`, etc.)

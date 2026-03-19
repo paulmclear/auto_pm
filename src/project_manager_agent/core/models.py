@@ -15,6 +15,7 @@ RaidStatus = Literal["open", "closed", "accepted", "superseded"]
 ActionStatus = Literal["open", "complete", "overdue"]
 ImpactLevel = Literal["high", "medium", "low"]
 MilestoneStatus = Literal["pending", "achieved", "missed"]
+MessageDirection = Literal["inbound", "outbound"]
 
 
 # ---------------------------------------------------------------------------
@@ -69,7 +70,7 @@ class Project:
 
     name: str
     description: str
-    objectives: list  # list of strings
+    objectives: list[str]
     sponsor: str
     project_manager: str
     planned_start: dt.date
@@ -78,8 +79,8 @@ class Project:
     forecast_end: dt.date
     rag_status: RagStatus
     rag_reason: str
-    phases: list = field(default_factory=list)  # list of Phase dicts
-    milestones: list = field(default_factory=list)  # list of Milestone dicts
+    phases: list[Phase] = field(default_factory=list)
+    milestones: list[Milestone] = field(default_factory=list)
 
 
 @dataclass
@@ -135,6 +136,20 @@ class Action:
     status: ActionStatus = "open"
     source_raid_id: Optional[int] = None
     source_task_id: Optional[int] = None
+
+
+@dataclass
+class Message:
+    """A single inbox or outbox message."""
+
+    message_id: str
+    direction: MessageDirection
+    timestamp: str
+    owner_name: str
+    owner_email: str
+    message: str
+    sender_name: str
+    sender_email: str
 
 
 # ---------------------------------------------------------------------------
