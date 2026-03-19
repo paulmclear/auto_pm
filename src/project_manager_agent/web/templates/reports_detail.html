@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Report — {{ date }}{% endblock %}
+{% block content %}
+<h1>Report — {{ date }}</h1>
+<p><a href="/reports">← Back to reports list</a></p>
+<div class="card rendered-md">
+    {{ content_html | safe }}
+</div>
+{% endblock %}

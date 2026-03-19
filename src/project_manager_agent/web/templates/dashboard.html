@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ project.name }}{% endblock %}
+{% block content %}
+<h1>{{ project.name }}</h1>
+<p>{{ project.description }}</p>
+
+<div class="card">
+    <h2>Project Health</h2>
+    <p>
+        <span class="badge badge-{{ project.rag_status }}">{{ project.rag_status | upper }}</span>
+        {{ project.rag_reason }}
+    </p>
+    <p><strong>Planned:</strong> {{ project.planned_start }} → {{ project.planned_end }}
+       | <strong>Forecast end:</strong> {{ project.forecast_end }}</p>
+</div>
+
+<h2>Task Summary</h2>
+<div class="stats">
+    <div class="stat"><div class="number">{{ task_counts.total }}</div><div class="label">Total</div></div>
+    <div class="stat"><div class="number">{{ task_counts.not_started }}</div><div class="label">Not Started</div></div>
+    <div class="stat"><div class="number">{{ task_counts.in_progress }}</div><div class="label">In Progress</div></div>
+    <div class="stat"><div class="number">{{ task_counts.complete }}</div><div class="label">Complete</div></div>
+    <div class="stat"><div class="number">{{ task_counts.blocked }}</div><div class="label">Blocked</div></div>
+</div>
+
+<h2>Milestones</h2>
+<table>
+    <thead>
+        <tr><th>Milestone</th><th>Planned</th><th>Forecast</th><th>Actual</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        {% for m in project.milestones %}
+        <tr>
+            <td>{{ m.name }}</td>
+            <td>{{ m.planned_date }}</td>
+            <td>{{ m.forecast_date }}</td>
+            <td>{{ m.actual_date or "—" }}</td>
+            <td><span class="badge badge-{{ m.status }}">{{ m.status }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

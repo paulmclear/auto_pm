@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+{% block content %}
+<h1>Tasks</h1>
+<table>
+    <thead>
+        <tr><th>ID</th><th>Description</th><th>Owner</th><th>Due Date</th><th>Status</th><th>Blocked</th></tr>
+    </thead>
+    <tbody>
+        {% for t in tasks %}
+        <tr>
+            <td>{{ t.task_id }}</td>
+            <td>{{ t.description }}</td>
+            <td>{{ t.owner_name }}</td>
+            <td>{{ t.due_date }}</td>
+            <td><span class="badge badge-{{ t.status }}">{{ t.status | replace("_", " ") }}</span></td>
+            <td>{{ t.blocked_reason or "—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

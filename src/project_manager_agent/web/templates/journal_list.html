@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Journal{% endblock %}
+{% block content %}
+<h1>Journal Entries</h1>
+{% if dates %}
+<ul class="date-list">
+    {% for date in dates %}
+    <li><a href="/journal/{{ date }}">{{ date }}</a></li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No journal entries found.</p>
+{% endif %}
+{% endblock %}

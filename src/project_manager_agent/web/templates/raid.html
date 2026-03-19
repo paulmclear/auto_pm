@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}RAID Log{% endblock %}
+{% block content %}
+<h1>RAID Log</h1>
+<table>
+    <thead>
+        <tr><th>ID</th><th>Type</th><th>Title</th><th>Owner</th><th>Raised</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.raid_id }}</td>
+            <td>{{ item.type | capitalize }}</td>
+            <td>{{ item.title }}</td>
+            <td>{{ item.owner }}</td>
+            <td>{{ item.raised_date }}</td>
+            <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

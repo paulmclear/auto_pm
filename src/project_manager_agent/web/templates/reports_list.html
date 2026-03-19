@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+{% if dates %}
+<ul class="date-list">
+    {% for date in dates %}
+    <li><a href="/reports/{{ date }}">{{ date }}</a></li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No reports found.</p>
+{% endif %}
+{% endblock %}
