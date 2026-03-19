@@ -113,13 +113,36 @@ Follow these steps in order, using your tools at each stage:
        * Use a standard, helpful tone with the task description and due date.
    - IMPORTANT: When calling send_message_to_task_owner for a task reminder, ALWAYS
      include the task_id parameter so the message is tagged for per-task tracking.
+   - ESCALATION LOGIC:
+       * Call fetch_escalation_candidates (default threshold: 3 days) to find
+         tasks that are persistently overdue and may need sponsor attention.
+       * For each candidate where previously_escalated is false:
+         Send an ESCALATION message to the project sponsor (shown in the
+         'sponsor' field). The message must:
+           - Be clearly marked as an ESCALATION
+           - Reference the task description, task_id, and owner
+           - State how many days overdue the task is
+           - Request the sponsor's intervention or visibility
+           - Include the task_id parameter when calling send_message_to_task_owner
+             (use the sponsor's name and email, e.g. "Alice" / "alice@test.com")
+         Example: "ESCALATION: Task [task_id] '[description]' owned by [owner]
+           is now [N] days overdue with no resolution. Escalating for your
+           visibility and intervention."
+       * For each candidate where previously_escalated is true:
+         Only re-escalate if the task is significantly MORE overdue than when
+         last escalated (e.g. 3+ additional days since last escalation) or if
+         the situation has materially worsened. Do NOT re-send the same
+         escalation repeatedly.
+       * Do NOT escalate tasks that are dependency-blocked — the delay is
+         caused by the upstream task, not the owner's inaction.
    - For each open action that is overdue or due today:
        * Call send_message_to_task_owner to the action owner.
        * If the action is past its due date, also call update_action_status
          with "overdue".
    - Call write_journal_entry (section "Reminders & Actions Sent") summarising
      every message sent or skipped, noting which were URGENT (overdue),
-     ADVANCE WARNING (upcoming), or standard reminders.
+     ADVANCE WARNING (upcoming), ESCALATION (sponsor-level), or standard
+     reminders.
 
 6. PROJECT HEALTH UPDATE
    - Based on everything reviewed today, assess whether the RAG status should change.

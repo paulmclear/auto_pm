@@ -62,6 +62,50 @@ def fetch_overdue_tasks() -> list[dict]:
         svc.close()
 
 
+def fetch_escalation_candidates(overdue_threshold_days: int = 3) -> list[dict]:
+    """Return tasks overdue by at least *overdue_threshold_days* that may need
+    escalation to the project sponsor.
+
+    Each result includes:
+    - All standard task fields
+    - ``days_overdue``: how many days past due
+    - ``previously_escalated``: whether an escalation message was already sent
+      to the sponsor for this task
+    - ``last_escalation_date``: ISO date of the most recent escalation (if any)
+    - ``sponsor``: the project sponsor name (escalation recipient)
+    """
+    svc = ProjectService()
+    try:
+        tasks = svc.read_tasks()
+        project = svc.read_project()
+        outbox = svc.read_outbox()
+
+        # Build lookup: task_id → most recent escalation timestamp
+        escalation_dates: dict[int, str] = {}
+        for msg in outbox:
+            if msg.task_id and "ESCALATION" in msg.message.upper():
+                existing = escalation_dates.get(msg.task_id, "")
+                if msg.timestamp > existing:
+                    escalation_dates[msg.task_id] = msg.timestamp
+
+        results = []
+        for t in tasks:
+            if t.status == "complete":
+                continue
+            days_overdue = (REFERENCE_DATE - t.due_date).days
+            if days_overdue < overdue_threshold_days:
+                continue
+            d = _serialize(t)
+            d["days_overdue"] = days_overdue
+            d["previously_escalated"] = t.task_id in escalation_dates
+            d["last_escalation_date"] = escalation_dates.get(t.task_id)
+            d["sponsor"] = project.sponsor
+            results.append(d)
+        return results
+    finally:
+        svc.close()
+
+
 def fetch_upcoming_due_tasks(lead_days: int = 2) -> list[dict]:
     """Return incomplete tasks whose due_date is within the next *lead_days* days.
 
@@ -392,6 +436,10 @@ def update_action_status(action_id: int, status: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+class FetchEscalationCandidatesInput(BaseModel):
+    overdue_threshold_days: int = 3
+
+
 class FetchUpcomingDueTasksInput(BaseModel):
     lead_days: int = 2
 
@@ -552,6 +600,19 @@ fetch_upcoming_due_tasks_tool = StructuredTool(
     args_schema=FetchUpcomingDueTasksInput,
 )
 
+fetch_escalation_candidates_tool = StructuredTool(
+    name="fetch_escalation_candidates",
+    description=(
+        "Fetch tasks that are overdue by N or more days (default 3) and may need "
+        "escalation to the project sponsor. Each result includes 'days_overdue', "
+        "'previously_escalated' (bool), 'last_escalation_date', and 'sponsor'. "
+        "Use this to decide which tasks warrant an escalation message to the "
+        "project sponsor or manager."
+    ),
+    func=fetch_escalation_candidates,
+    args_schema=FetchEscalationCandidatesInput,
+)
+
 fetch_inbox_tool = Tool(
     name="fetch_inbox_messages",
     description="Read all messages received in the inbox from task owners.",
@@ -700,6 +761,7 @@ tools = [
     fetch_overdue_tasks_tool,
     fetch_dependency_blocked_tasks_tool,
     fetch_upcoming_due_tasks_tool,
+    fetch_escalation_candidates_tool,
     fetch_project_plan_tool,
     fetch_raid_items_tool,
     fetch_actions_tool,
