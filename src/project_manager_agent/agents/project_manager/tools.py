@@ -6,10 +6,12 @@ the project manager agent.
 """
 
 import datetime as dt
+import json
 from dataclasses import asdict
 from typing import Literal, Optional
 
 from langchain_core.tools import Tool, StructuredTool
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from project_manager_agent.core.date_utils import REFERENCE_DATE
@@ -180,6 +182,89 @@ def read_inbox() -> list[dict]:
         return [_serialize(m) for m in svc.read_inbox()]
     finally:
         svc.close()
+
+
+_INTENT_PARSE_PROMPT = """\
+You are a project management assistant. Analyse each inbox message and classify \
+its intent. Return a JSON array with one object per message.
+
+Each object MUST have these fields:
+- "message_id": the original message_id (string)
+- "intent": one of "completion_confirmation", "blocker_report", \
+"date_change_request", "resource_request", "question", "general_update"
+- "confidence": "high" or "low"
+- "referenced_task_id": integer task_id if the message clearly references a \
+specific task, otherwise null
+- "extracted_details": a short string summarising the actionable content \
+(e.g. the blocker reason, the requested new date, the question asked). \
+Empty string if nothing specific.
+- "suggested_action": one of "update_task_complete", "update_task_blocked", \
+"update_task_due_date", "add_raid_item", "reply_needed", "note_only", "none"
+
+Rules:
+- If someone says a task is done/finished/complete → "completion_confirmation"
+- If someone reports being stuck/blocked/waiting → "blocker_report"
+- If someone asks to push back/extend/change a deadline → "date_change_request"
+- If someone asks for help/resources/more people → "resource_request"
+- If someone asks a question → "question"
+- Otherwise → "general_update"
+
+Messages:
+{messages_json}
+
+Respond ONLY with the JSON array, no markdown fences or explanation."""
+
+
+def parse_inbox_messages() -> list[dict]:
+    """Read inbox messages and classify each one by intent using LLM parsing.
+
+    Returns the original message fields enriched with:
+    - ``intent``: the classified intent type
+    - ``confidence``: "high" or "low"
+    - ``referenced_task_id``: task_id if identifiable, else null
+    - ``extracted_details``: actionable summary
+    - ``suggested_action``: recommended next step
+    """
+    svc = ProjectService()
+    try:
+        messages = svc.read_inbox()
+    finally:
+        svc.close()
+
+    if not messages:
+        return []
+
+    raw = [_serialize(m) for m in messages]
+
+    # Call LLM to parse intents
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    prompt = _INTENT_PARSE_PROMPT.format(messages_json=json.dumps(raw, indent=2))
+    response = llm.invoke(prompt)
+
+    try:
+        parsed = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        # Fallback: return messages with unknown intent
+        for m in raw:
+            m["intent"] = "general_update"
+            m["confidence"] = "low"
+            m["referenced_task_id"] = None
+            m["extracted_details"] = ""
+            m["suggested_action"] = "none"
+        return raw
+
+    # Merge parsed intents back onto original message dicts
+    intent_by_id = {p["message_id"]: p for p in parsed}
+    results = []
+    for m in raw:
+        intent_data = intent_by_id.get(m["message_id"], {})
+        m["intent"] = intent_data.get("intent", "general_update")
+        m["confidence"] = intent_data.get("confidence", "low")
+        m["referenced_task_id"] = intent_data.get("referenced_task_id")
+        m["extracted_details"] = intent_data.get("extracted_details", "")
+        m["suggested_action"] = intent_data.get("suggested_action", "none")
+        results.append(m)
+    return results
 
 
 def send_message(
@@ -619,6 +704,19 @@ fetch_inbox_tool = Tool(
     func=lambda _: read_inbox(),
 )
 
+parse_inbox_tool = Tool(
+    name="parse_inbox_messages",
+    description=(
+        "Read inbox messages and classify each one by structured intent using "
+        "LLM parsing. Returns each message enriched with: intent (completion_confirmation, "
+        "blocker_report, date_change_request, resource_request, question, general_update), "
+        "confidence (high/low), referenced_task_id, extracted_details, and "
+        "suggested_action. Use this INSTEAD of fetch_inbox_messages for smarter "
+        "inbox processing — it tells you exactly what action each message needs."
+    ),
+    func=lambda _: parse_inbox_messages(),
+)
+
 fetch_project_plan_tool = Tool(
     name="fetch_project_plan",
     description=(
@@ -757,6 +855,7 @@ tools = [
     fetch_last_journal_tool,
     fetch_outbox_tool,
     fetch_inbox_tool,
+    parse_inbox_tool,
     fetch_tasks_tool,
     fetch_overdue_tasks_tool,
     fetch_dependency_blocked_tasks_tool,

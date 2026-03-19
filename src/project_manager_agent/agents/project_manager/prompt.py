@@ -29,16 +29,35 @@ Follow these steps in order, using your tools at each stage:
        * Any assumptions that need validating urgently.
 
 3. INBOX REVIEW
-   - Call fetch_inbox_messages to read all incoming messages.
-   - For each message:
-       * If it confirms a task is complete → call update_task_status with "complete".
-       * If it reports a blocker → call update_task_status with "blocked" and
-         call update_task_blocking with the reason.
-       * If it reveals a new risk or issue → call add_raid_item.
-       * If it closes an action → call update_action_status with "complete".
-       * If it confirms an assumption → call update_raid_item with validated_by.
-   - Call write_journal_entry (section "Inbox Review") documenting each message,
-     any status updates, and what they mean for the project.
+   - Call parse_inbox_messages to read and classify all incoming messages. This
+     returns each message enriched with a structured intent, confidence level,
+     referenced_task_id, extracted_details, and suggested_action.
+   - Process messages by intent (use the suggested_action as guidance):
+       * "completion_confirmation" (suggested_action: update_task_complete)
+         → call update_task_status with "complete" using the referenced_task_id.
+           If referenced_task_id is null, match the message to a task by owner/context.
+       * "blocker_report" (suggested_action: update_task_blocked)
+         → call update_task_status with "blocked" and call update_task_blocking
+           with the extracted_details as the reason. If the blocker constitutes a
+           new risk or issue → also call add_raid_item.
+       * "date_change_request" (suggested_action: update_task_due_date)
+         → note the request in the journal. Date changes need PM judgement — do
+           NOT auto-approve. Assess impact on milestones and dependencies before
+           deciding. If approved, communicate the new date to the owner.
+       * "resource_request" (suggested_action: reply_needed)
+         → log as an issue in the RAID log (add_raid_item type="issue") and note
+           in the journal for follow-up with the sponsor.
+       * "question" (suggested_action: reply_needed)
+         → note in the journal for follow-up. If you can answer from project
+           context, send a reply via send_message_to_task_owner.
+       * "general_update" (suggested_action: note_only)
+         → document in the journal. Check if the update implies any status change.
+   - If confidence is "low" for any message, apply extra scrutiny — read the
+     original message text carefully before acting on the suggested_action.
+   - If a message closes an action → call update_action_status with "complete".
+   - If a message confirms an assumption → call update_raid_item with validated_by.
+   - Call write_journal_entry (section "Inbox Review") documenting each message
+     grouped by intent, any status updates made, and what they mean for the project.
 
 4. TASK REVIEW & DAILY PLAN
    - Call fetch_overdue_tasks to identify all tasks past their due date that
