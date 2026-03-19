@@ -17,59 +17,72 @@ The goal: agents and web are independent consumers of a shared `core` package co
 
 ## Target Package Structure
 
+Uses `src/` layout with three peer top-level packages under `src/project_manager_agent/`:
+
 ```
-project_manager_agent/
-├── __init__.py
-├── date_utils.py                          # unchanged — reads data/date.json
-│
-├── core/                                  # NEW — shared by agents + web
-│   ├── __init__.py
-│   ├── models.py                          # moved from project_manager_agent/models.py
-│   ├── protocols.py                       # repository interfaces (Protocol classes)
-│   ├── services.py                        # thin service facade
-│   └── db/
-│       ├── __init__.py
-│       ├── orm.py                         # SQLAlchemy ORM table models
-│       ├── engine.py                      # engine + session factory
-│       ├── repositories.py               # SQLite repo implementations
-│       └── seed.py                        # demo data seeding
-│
-├── project_manager/                       # existing — rewired imports
-│   ├── __init__.py
-│   ├── agent.py
-│   ├── prompt.py                          # unchanged
-│   └── tools.py                           # rewired to use services
-│
-├── reporter/                              # existing — rewired imports
-│   ├── __init__.py
-│   ├── agent.py
-│   ├── context.py                         # rewired to use services
-│   └── prompt.py                          # unchanged
-│
-└── web/                                   # NEW — FastAPI dashboard
+src/
+└── project_manager_agent/
     ├── __init__.py
-    ├── app.py                             # FastAPI app factory
-    ├── routes/
+    │
+    ├── core/                                  # shared by agents + web
     │   ├── __init__.py
-    │   ├── dashboard.py
-    │   ├── tasks.py
-    │   ├── raid.py
-    │   ├── journal.py
-    │   └── reports.py
-    ├── templates/                         # Jinja2 + AlpineJS
-    │   ├── base.html
-    │   ├── dashboard.html
-    │   ├── tasks.html
-    │   ├── raid.html
-    │   ├── journal.html
-    │   └── reports.html
-    └── static/
-        └── style.css
+    │   ├── models.py                          # domain dataclasses (moved from old models.py)
+    │   ├── protocols.py                       # repository interfaces (Protocol classes)
+    │   ├── services.py                        # thin service facade
+    │   ├── date_utils.py                      # simulated time (moved from old date_utils.py)
+    │   └── db/
+    │       ├── __init__.py
+    │       ├── orm.py                         # SQLAlchemy ORM table models
+    │       ├── engine.py                      # engine + session factory
+    │       ├── repositories.py               # SQLite repo implementations
+    │       └── seed.py                        # demo data seeding
+    │
+    ├── agents/                                # all agent workflows
+    │   ├── __init__.py
+    │   ├── project_manager/                   # PM daily-loop agent
+    │   │   ├── __init__.py
+    │   │   ├── agent.py
+    │   │   ├── prompt.py
+    │   │   └── tools.py                       # rewired to use core.services
+    │   └── reporter/                          # report generation agent
+    │       ├── __init__.py
+    │       ├── agent.py
+    │       ├── context.py                     # rewired to use core.services
+    │       └── prompt.py
+    │
+    └── web/                                   # FastAPI dashboard
+        ├── __init__.py
+        ├── app.py                             # FastAPI app factory
+        ├── routes/
+        │   ├── __init__.py
+        │   ├── dashboard.py
+        │   ├── tasks.py
+        │   ├── raid.py
+        │   ├── journal.py
+        │   └── reports.py
+        ├── templates/                         # Jinja2 + AlpineJS
+        │   ├── base.html
+        │   ├── dashboard.html
+        │   ├── tasks.html
+        │   ├── raid.html
+        │   ├── journal.html
+        │   └── reports.html
+        └── static/
+            └── style.css
 ```
 
-Root-level files updated: `create_demo_data.py`, `reset.py`, `pyproject.toml`.
+Root-level files updated: `create_demo_data.py`, `reset.py`, `pyproject.toml` (add `[tool.setuptools.packages.find] where = ["src"]`).
 
-Data directory changes:
+**Import paths change**: e.g. `from project_manager_agent.core.models import Task`, `from project_manager_agent.agents.project_manager.tools import tools`.
+
+**Module run commands change**:
+```bash
+uv run python -m project_manager_agent.agents.project_manager.agent
+uv run python -m project_manager_agent.agents.reporter.agent
+uv run uvicorn project_manager_agent.web.app:app --reload
+```
+
+Data directory (stays at project root, not under `src/`):
 - `data/project_manager.db` — new SQLite database
 - `data/journal/` — stays as markdown files (unchanged)
 - `data/reports/` — stays as markdown files (unchanged)
@@ -79,6 +92,11 @@ Data directory changes:
 ---
 
 ## Key Design Decisions
+
+### `src/` layout with three peer packages
+- **`core/`** — domain models, protocols, services, DB layer, date_utils. Shared by agents + web. No dependency on agents or web.
+- **`agents/`** — all agent workflows (PM + reporter). Depends on `core/`, never on `web/`.
+- **`web/`** — FastAPI dashboard. Depends on `core/`, never on `agents/`.
 
 ### DDD: Domain models vs ORM models
 - **Domain layer**: existing dataclasses in `core/models.py` (Task, Phase, Milestone, Project, RaidItem, Action) are the contract. They remain pure Python with no SQLAlchemy dependency.
@@ -111,8 +129,19 @@ Use `Base.metadata.create_all()` for table creation, `drop_all()` for reset. Thi
 
 ## Epic 1: SQLite Data Layer
 
+### Step 1.0 — Create `src/` layout and move existing code
+- Create `src/project_manager_agent/` directory structure with `core/`, `agents/project_manager/`, `agents/reporter/`
+- Move `project_manager_agent/project_manager/` → `src/project_manager_agent/agents/project_manager/`
+- Move `project_manager_agent/reporter/` → `src/project_manager_agent/agents/reporter/`
+- Move `project_manager_agent/date_utils.py` → `src/project_manager_agent/core/date_utils.py`
+- Move `project_manager_agent/repositories.py` → keep temporarily until Epic 2 deletes it
+- Update `pyproject.toml` to use `src/` layout: `[tool.setuptools.packages.find] where = ["src"]`
+- Update all internal imports to use new paths
+
 ### Step 1.1 — Create `core/models.py`
-- Move contents of `project_manager_agent/models.py` → `core/models.py`
+- Move contents of `project_manager_agent/models.py` → `src/project_manager_agent/core/models.py`
+- **Tighten `Project` dataclass**: change `phases: list` → `phases: list[Phase]` and `milestones: list` → `milestones: list[Milestone]`
+- **Tighten `Project.objectives`**: change `objectives: list` → `objectives: list[str]`
 - Add `Message` dataclass for inbox/outbox records:
   ```python
   @dataclass
@@ -127,7 +156,6 @@ Use `Base.metadata.create_all()` for table creation, `drop_all()` for reset. Thi
       sender_email: Optional[str] = None
   ```
 - Keep `JsonSerialiser` (still used by journal writes)
-- Leave a re-export shim in the old `models.py` location temporarily (removed in Epic 3)
 
 ### Step 1.2 — Create `core/protocols.py`
 Repository interfaces using `typing.Protocol`. All repos return **typed domain objects** (not raw dicts):
@@ -223,12 +251,12 @@ Add: `sqlalchemy>=2.0`
 
 ---
 
-## Epic 2: Web UI (FastAPI + AlpineJS)
+## Epic 2: Migrate Agent Toolset
 
-**Depends on**: Epic 1 complete + `core/services.py` (created in this epic)
+**Depends on**: Epic 1
 
 ### Step 2.1 — Create `core/services.py`
-Thin facade that both agents and web consume:
+Thin facade that both agents and (later) web consume. All methods use **typed domain objects**:
 
 ```python
 class ProjectService:
@@ -247,24 +275,24 @@ class ProjectService:
     def update_task_blocking(self, ...) -> None: ...
 
     # Project methods
-    def get_project(self) -> dict: ...
+    def get_project(self) -> Project: ...
     def update_project_health(self, ...) -> None: ...
     def update_milestone(self, ...) -> None: ...
 
     # RAID methods
-    def list_raid_items(self) -> list[dict]: ...
-    def add_raid_item(self, item: dict) -> int: ...
+    def list_raid_items(self) -> list[RaidItem]: ...
+    def add_raid_item(self, item: RaidItem) -> int: ...
     def update_raid_item(self, raid_id: int, fields: dict) -> None: ...
 
     # Action methods
-    def list_actions(self) -> list[dict]: ...
-    def add_action(self, action: dict) -> int: ...
+    def list_actions(self) -> list[Action]: ...
+    def add_action(self, action: Action) -> int: ...
     def update_action_status(self, action_id: int, status: ActionStatus) -> None: ...
 
     # Message methods
     def send_message(self, owner_name, owner_email, message) -> None: ...
-    def list_inbox(self) -> list[dict]: ...
-    def list_outbox(self) -> list[dict]: ...
+    def list_inbox(self) -> list[Message]: ...
+    def list_outbox(self) -> list[Message]: ...
 
     # Journal methods
     def read_last_journal(self) -> Optional[str]: ...
@@ -279,41 +307,7 @@ class ProjectService:
 
 Each method is a 1-3 line delegation to the appropriate repo. Business logic (e.g. filtering overdue tasks) stays in the consumer (reporter's `context.py`, web routes) — the service is just a wiring layer.
 
-### Step 2.2 — Add dependencies
-`pyproject.toml`: `fastapi`, `uvicorn[standard]`, `jinja2`, `python-markdown`
-
-### Step 2.3 — Create `web/app.py`
-- FastAPI app with Jinja2 templates
-- Mount static files
-- `get_service()` dependency that yields `ProjectService`
-- Include routers from `routes/`
-
-### Step 2.4 — Create route modules
-All read-only, server-rendered HTML:
-
-| Route | Path | Data |
-|-------|------|------|
-| Dashboard | `GET /` | Project summary, RAG, milestone table, task counts |
-| Tasks | `GET /tasks` | All tasks with AlpineJS filter/sort |
-| RAID | `GET /raid` | RAID log with type-tab filtering |
-| Journal | `GET /journal` | Date list; `GET /journal/{date}` renders markdown |
-| Reports | `GET /reports` | Date list; `GET /reports/{date}` renders markdown |
-
-### Step 2.5 — Templates
-- `base.html`: nav sidebar, AlpineJS from CDN, Pico CSS (classless) from CDN, content block
-- Page templates: extend base, use `x-data`, `x-show`, `x-for` for client interactivity
-- No build tools, no npm
-
-### Step 2.6 — Tests
-- `tests/test_web.py` — FastAPI `TestClient`, seed DB, assert 200 + key content per route
-
----
-
-## Epic 3: Migrate Agent Toolset
-
-**Depends on**: Epic 2 (specifically `core/services.py`)
-
-### Step 3.1 — Rewire `project_manager/tools.py`
+### Step 2.2 — Rewire `agents/project_manager/tools.py`
 Replace all direct repo instantiation with `ProjectService`:
 
 ```python
@@ -332,61 +326,106 @@ def read_last_journal() -> str:
 
 Tool signatures, Pydantic schemas, and tool descriptions remain **identical** — the LLM prompt does not change.
 
+**Typed object adaptation**: Tools that currently work with dicts (e.g. `fetch_raid_items`, `add_raid_item`, `fetch_actions`, `add_action`, `fetch_project_plan`) need updating:
+- `fetch_project_plan()` returns `Project` dataclass → tools/reporter use attribute access (`project.name`) instead of dict access (`project["name"]`)
+- `fetch_raid_items()` returns `list[RaidItem]` → serialise via `dataclasses.asdict()` for the LLM tool response
+- `add_raid_item()` constructs a `RaidItem` instead of a raw dict before passing to the service
+- Same pattern for Actions
+
 Note: `fetch_tasks_tool` currently has an inline lambda `lambda _: TasksRepo().read()`. This also gets rewired to use the service.
 
-### Step 3.2 — Rewire `reporter/context.py`
-Replace `TasksRepo()`, `ProjectRepo()`, etc. with `ProjectService()` calls. The `load_all()` function's return structure stays the same — only the data source changes.
+### Step 2.3 — Rewire `agents/reporter/context.py`
+Replace `TasksRepo()`, `ProjectRepo()`, etc. with `ProjectService()` calls. Adapt `load_all()` and `format_context()` to work with typed dataclasses instead of dicts.
 
-### Step 3.3 — Rewire `project_manager/agent.py`
+### Step 2.4 — Rewire `agents/project_manager/agent.py`
 Replace repo `initialise()` calls in `__main__` with `create_tables()` + journal dir init.
 
-### Step 3.4 — Update `create_demo_data.py`
+### Step 2.5 — Update `create_demo_data.py`
 Call `create_tables()` then `seed_demo_data(session)` from `core.db.seed`.
 
-### Step 3.5 — Update `reset.py`
+### Step 2.6 — Update `reset.py`
 - `Base.metadata.drop_all(engine)` + `create_tables()` instead of deleting JSON files
 - Still delete journal markdown files and optionally reports
 - Still reset `data/date.json`
 
-### Step 3.6 — Delete old files
-- Remove `project_manager_agent/models.py` (now at `core/models.py`)
-- Remove `project_manager_agent/repositories.py` (replaced by `core/db/repositories.py` + `core/services.py`)
+### Step 2.7 — Delete old files
+- Remove old `project_manager_agent/` directory (everything now lives under `src/project_manager_agent/`)
 - Remove old JSON data files (`tasks.json`, `project.json`, `raid.json`, `actions.json`, `inbox/`, `outbox/`)
 
-### Step 3.7 — Update CLAUDE.md
+### Step 2.8 — Update CLAUDE.md
 Document new architecture, package structure, and commands.
+
+### Step 2.9 — Tests
+- `tests/test_services.py` — test service methods against in-memory SQLite
+- Run agent end-to-end against demo data to verify nothing broke
+
+---
+
+## Epic 3: Web UI (FastAPI + AlpineJS)
+
+**Depends on**: Epics 1 + 2 complete (entire system on SQL, service layer exists)
+
+### Step 3.1 — Add dependencies
+`pyproject.toml`: `fastapi`, `uvicorn[standard]`, `jinja2`, `markdown`
+
+### Step 3.2 — Create `web/app.py`
+- FastAPI app with Jinja2 templates
+- Mount static files
+- `get_service()` dependency that yields `ProjectService`
+- Include routers from `routes/`
+
+### Step 3.3 — Create route modules
+All read-only, server-rendered HTML:
+
+| Route | Path | Data |
+|-------|------|------|
+| Dashboard | `GET /` | Project summary, RAG, milestone table, task counts |
+| Tasks | `GET /tasks` | All tasks with AlpineJS filter/sort |
+| RAID | `GET /raid` | RAID log with type-tab filtering |
+| Journal | `GET /journal` | Date list; `GET /journal/{date}` renders markdown |
+| Reports | `GET /reports` | Date list; `GET /reports/{date}` renders markdown |
+
+### Step 3.4 — Templates
+- `base.html`: nav sidebar, AlpineJS from CDN, Pico CSS (classless) from CDN, content block
+- Page templates: extend base, use `x-data`, `x-show`, `x-for` for client interactivity
+- No build tools, no npm
+
+### Step 3.5 — Tests
+- `tests/test_web.py` — FastAPI `TestClient`, seed DB, assert 200 + key content per route
 
 ---
 
 ## Implementation Order
 
 ```
-Epic 1 (SQLite foundation)
-  1.1  core/__init__.py + core/models.py (move models)
-  1.2  core/protocols.py (repository interfaces)
+Epic 1 (SQLite foundation + src/ restructure)
+  1.0  Create src/ layout, move existing code, update pyproject.toml + imports
+  1.1  core/models.py (move + tighten domain models)
+  1.2  core/protocols.py (typed repository interfaces)
   1.3  core/db/orm.py (ORM table models)
   1.4  core/db/engine.py (engine + session)
   1.5  core/db/repositories.py (all SQL repos + FileJournalRepo)
   1.6  core/db/seed.py (demo data)
-  1.7  pyproject.toml (add sqlalchemy)
+  1.7  pyproject.toml (add sqlalchemy, pytest)
   1.8  tests/test_repositories.py
 
-Epic 2 (Web UI) — includes service layer
+Epic 2 (Agent migration)
   2.1  core/services.py (ProjectService)
-  2.2  pyproject.toml (add fastapi, uvicorn, jinja2, markdown)
-  2.3  web/app.py
-  2.4  web/routes/ (dashboard, tasks, raid, journal, reports)
-  2.5  web/templates/ + web/static/
-  2.6  tests/test_web.py
+  2.2  Rewire agents/project_manager/tools.py → ProjectService
+  2.3  Rewire agents/reporter/context.py → ProjectService
+  2.4  Rewire agents/project_manager/agent.py entry point
+  2.5  Update create_demo_data.py
+  2.6  Update reset.py
+  2.7  Delete old project_manager_agent/ dir + JSON data files
+  2.8  Update CLAUDE.md
+  2.9  tests/test_services.py + end-to-end smoke test
 
-Epic 3 (Agent migration)
-  3.1  Rewire tools.py → ProjectService
-  3.2  Rewire reporter/context.py → ProjectService
-  3.3  Rewire agent.py entry point
-  3.4  Update create_demo_data.py
-  3.5  Update reset.py
-  3.6  Delete old models.py, repositories.py, JSON files
-  3.7  Update CLAUDE.md
+Epic 3 (Web UI)
+  3.1  pyproject.toml (add fastapi, uvicorn, jinja2, markdown)
+  3.2  web/app.py
+  3.3  web/routes/ (dashboard, tasks, raid, journal, reports)
+  3.4  web/templates/ + web/static/
+  3.5  tests/test_web.py
 ```
 
 ---
@@ -395,45 +434,47 @@ Epic 3 (Agent migration)
 
 After each epic:
 
-**Epic 1**: Run `tests/test_repositories.py` — all repos read/write correctly against in-memory SQLite.
+**Epic 1**: Run `tests/test_repositories.py` — all repos read/write correctly against in-memory SQLite. All return typed domain objects.
 
 **Epic 2**:
 ```bash
-uv run python create_demo_data.py          # seeds SQL + journals
-uv run uvicorn project_manager_agent.web.app:app --reload
-# Visit http://localhost:8000 — verify dashboard, tasks, RAID, journal, reports pages
+uv run python reset.py --date 2026-03-19
+uv run python create_demo_data.py
+uv run python -m project_manager_agent.agents.project_manager.agent  # daily loop on SQL
+uv run python -m project_manager_agent.agents.reporter.agent          # report from SQL
+uv run pytest tests/
 ```
 
 **Epic 3**:
 ```bash
-uv run python reset.py --date 2026-03-19
-uv run python create_demo_data.py
-uv run python -m project_manager_agent.project_manager.agent   # daily loop runs against SQL
-uv run python -m project_manager_agent.reporter.agent           # report generated from SQL
-uv run uvicorn project_manager_agent.web.app:app --reload       # web shows agent's changes
+uv run python create_demo_data.py          # seeds SQL + journals
+uv run uvicorn project_manager_agent.web.app:app --reload
+# Visit http://localhost:8000 — verify dashboard, tasks, RAID, journal, reports pages
+# Run agent, then refresh web to see agent's changes reflected
 ```
 
 ---
 
 ## Critical Files
 
-| File | Role in plan |
-|------|-------------|
-| `project_manager_agent/models.py` | Source for move → `core/models.py` |
-| `project_manager_agent/repositories.py` | API contract to match in SQL repos; deleted in Epic 3 |
-| `project_manager_agent/project_manager/tools.py` | 17 tool functions to rewire in Epic 3 |
-| `project_manager_agent/reporter/context.py` | `load_all()` to rewire in Epic 3 |
-| `project_manager_agent/project_manager/agent.py` | Entry point to rewire in Epic 3 |
-| `create_demo_data.py` | Port seeding logic to `core/db/seed.py` |
-| `reset.py` | Update to drop/recreate SQL tables |
+| Current path | Destination | Role |
+|-------------|-------------|------|
+| `project_manager_agent/models.py` | `src/.../core/models.py` | Domain dataclasses — tighten types |
+| `project_manager_agent/repositories.py` | deleted (replaced by `core/db/repositories.py`) | API contract reference |
+| `project_manager_agent/date_utils.py` | `src/.../core/date_utils.py` | Simulated time |
+| `project_manager_agent/project_manager/tools.py` | `src/.../agents/project_manager/tools.py` | 17 tools to rewire |
+| `project_manager_agent/project_manager/agent.py` | `src/.../agents/project_manager/agent.py` | Entry point to rewire |
+| `project_manager_agent/reporter/context.py` | `src/.../agents/reporter/context.py` | Data loading to rewire |
+| `create_demo_data.py` | stays at root, calls `core.db.seed` | Demo seeding |
+| `reset.py` | stays at root, drops/recreates SQL | Reset script |
 
 ## New Dependencies
 
 | Package | Epic | Purpose |
 |---------|------|---------|
 | `sqlalchemy>=2.0` | 1 | ORM + database engine |
-| `fastapi` | 2 | Web framework |
-| `uvicorn[standard]` | 2 | ASGI server |
-| `jinja2` | 2 | HTML templates |
-| `markdown` | 2 | Render journal/report .md as HTML |
+| `fastapi` | 3 | Web framework |
+| `uvicorn[standard]` | 3 | ASGI server |
+| `jinja2` | 3 | HTML templates |
+| `markdown` | 3 | Render journal/report .md as HTML |
 | `pytest` | 1 (dev) | Test runner |
