@@ -16,3 +16,7 @@ wheels/
 data/
 *.png
 *_cache/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
