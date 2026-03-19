@@ -14,6 +14,10 @@ from langchain_core.tools import Tool, StructuredTool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from project_manager_agent.core.config import (
+    ADVANCE_WARNING_DAYS,
+    ESCALATION_THRESHOLD_DAYS,
+)
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.models import Action, RaidItem
 from project_manager_agent.core.services import ProjectService
@@ -64,7 +68,9 @@ def fetch_overdue_tasks() -> list[dict]:
         svc.close()
 
 
-def fetch_escalation_candidates(overdue_threshold_days: int = 3) -> list[dict]:
+def fetch_escalation_candidates(
+    overdue_threshold_days: int = ESCALATION_THRESHOLD_DAYS,
+) -> list[dict]:
     """Return tasks overdue by at least *overdue_threshold_days* that may need
     escalation to the project sponsor.
 
@@ -108,7 +114,7 @@ def fetch_escalation_candidates(overdue_threshold_days: int = 3) -> list[dict]:
         svc.close()
 
 
-def fetch_upcoming_due_tasks(lead_days: int = 2) -> list[dict]:
+def fetch_upcoming_due_tasks(lead_days: int = ADVANCE_WARNING_DAYS) -> list[dict]:
     """Return incomplete tasks whose due_date is within the next *lead_days* days.
 
     Only includes tasks that are NOT already overdue (due_date >= REFERENCE_DATE)
@@ -522,11 +528,11 @@ def update_action_status(action_id: int, status: str) -> str:
 
 
 class FetchEscalationCandidatesInput(BaseModel):
-    overdue_threshold_days: int = 3
+    overdue_threshold_days: int = ESCALATION_THRESHOLD_DAYS
 
 
 class FetchUpcomingDueTasksInput(BaseModel):
-    lead_days: int = 2
+    lead_days: int = ADVANCE_WARNING_DAYS
 
 
 class UpdateTaskStatusInput(BaseModel):
