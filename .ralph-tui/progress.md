@@ -8,6 +8,7 @@ after each iteration and it's included in prompts for context.
 *Add reusable patterns discovered during development here.*
 
 - **src/ layout**: Package lives at `src/project_manager_agent/` with `core/` (models, date_utils, repositories), `agents/project_manager/`, and `agents/reporter/` as peer packages. All imports use absolute paths (e.g. `from project_manager_agent.core.models import Task`). Requires `uv pip install -e .` after initial setup.
+- **ORM models**: `core/db/orm.py` uses SQLAlchemy 2.0 `Mapped`/`mapped_column` style. List fields (depends_on, linked_task_ids, objectives) stored as JSON-encoded `Text` columns with default `"[]"`. Shared `Base` class for all models. Row classes suffixed with `Row` to avoid clashing with dataclass names in `core/models.py`.
 - **editable install**: `uv sync` alone doesn't install the package — need `uv pip install -e .` for imports to resolve.
 
 ---
@@ -40,4 +41,16 @@ after each iteration and it's included in prompts for context.
   - `uv sync` alone doesn't make the src/ layout package importable — need `uv pip install -e .` for editable install
   - `[tool.setuptools.packages.find] where = ["src"]` in pyproject.toml is necessary for setuptools to find packages under src/
   - ruff format auto-splits long import lines into multi-line format
+---
+
+## 2026-03-19 - pm-609.4
+- Created `core/db/__init__.py` and `core/db/orm.py` with SQLAlchemy 2.0 declarative ORM models
+- 7 tables: `projects`, `phases` (FK→projects), `milestones` (FK→projects), `tasks`, `raid_items`, `actions`, `messages`
+- List fields (`objectives`, `depends_on`, `linked_task_ids`) stored as JSON-encoded `Text` columns
+- Row classes suffixed with `Row` (e.g. `TaskRow`) to avoid name collisions with dataclasses in `core/models.py`
+- Files changed: `src/project_manager_agent/core/db/__init__.py`, `src/project_manager_agent/core/db/orm.py`
+- **Learnings:**
+  - SQLAlchemy 2.0 `Mapped[str | None]` syntax works cleanly for nullable columns
+  - Using `Text` for JSON list fields is simpler than `JSON` type since SQLite (likely target) has limited JSON support
+  - Naming convention `*Row` keeps ORM models distinct from domain dataclasses
 ---
