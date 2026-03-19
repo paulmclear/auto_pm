@@ -199,3 +199,4 @@ class MessageRow(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     sender_name: Mapped[str] = mapped_column(String, nullable=False)
     sender_email: Mapped[str] = mapped_column(String, nullable=False)
+    task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)

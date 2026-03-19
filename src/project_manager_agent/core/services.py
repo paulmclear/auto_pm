@@ -123,8 +123,14 @@ class ProjectService:
 
     # -- Messages ------------------------------------------------------------
 
-    def send_message(self, owner_name: str, owner_email: str, message: str) -> None:
-        self.messages.send(owner_name, owner_email, message)
+    def send_message(
+        self,
+        owner_name: str,
+        owner_email: str,
+        message: str,
+        task_id: Optional[int] = None,
+    ) -> None:
+        self.messages.send(owner_name, owner_email, message, task_id=task_id)
 
     def read_inbox(self) -> list:
         return self.messages.read_inbox()

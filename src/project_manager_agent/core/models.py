@@ -152,6 +152,7 @@ class Message:
     message: str
     sender_name: str
     sender_email: str
+    task_id: Optional[int] = None
 
 
 # ---------------------------------------------------------------------------

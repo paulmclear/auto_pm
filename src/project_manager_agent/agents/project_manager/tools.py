@@ -138,12 +138,15 @@ def read_inbox() -> list[dict]:
         svc.close()
 
 
-def send_message(owner_name: str, owner_email: str, message: str) -> str:
+def send_message(
+    owner_name: str, owner_email: str, message: str, task_id: Optional[int] = None
+) -> str:
     svc = ProjectService()
     try:
-        svc.send_message(owner_name, owner_email, message)
-        print(f"Message queued for {owner_name} ({owner_email}): {message}")
-        return f"Message queued for {owner_name}"
+        svc.send_message(owner_name, owner_email, message, task_id=task_id)
+        tag = f" [task {task_id}]" if task_id else ""
+        print(f"Message queued for {owner_name} ({owner_email}){tag}: {message}")
+        return f"Message queued for {owner_name}{tag}"
     finally:
         svc.close()
 
@@ -408,6 +411,7 @@ class SendMessageInput(BaseModel):
     owner_name: str
     owner_email: str
     message: str
+    task_id: Optional[int] = None
 
 
 class WriteJournalEntryInput(BaseModel):
@@ -606,7 +610,11 @@ update_task_blocking_tool = StructuredTool(
 
 communications_tool = StructuredTool(
     name="send_message_to_task_owner",
-    description="Send a reminder or chaser message to a task or action owner.",
+    description=(
+        "Send a reminder or chaser message to a task or action owner. "
+        "When sending a reminder about a specific task, include the task_id "
+        "so chaser frequency can be tracked per-task rather than per-person."
+    ),
     func=send_message,
     args_schema=SendMessageInput,
 )

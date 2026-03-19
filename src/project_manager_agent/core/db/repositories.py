@@ -146,6 +146,7 @@ def _message_to_domain(row: MessageRow) -> Message:
         message=row.message,
         sender_name=row.sender_name,
         sender_email=row.sender_email,
+        task_id=row.task_id,
     )
 
 
@@ -345,7 +346,13 @@ class SqliteMessageRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def send(self, owner_name: str, owner_email: str, message: str) -> None:
+    def send(
+        self,
+        owner_name: str,
+        owner_email: str,
+        message: str,
+        task_id: Optional[int] = None,
+    ) -> None:
         import uuid
 
         row = MessageRow(
@@ -357,6 +364,7 @@ class SqliteMessageRepository:
             message=message,
             sender_name="Project Manager Agent",
             sender_email="agent@project-manager.local",
+            task_id=task_id,
         )
         self._session.add(row)
         self._session.commit()

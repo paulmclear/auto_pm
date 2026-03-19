@@ -84,7 +84,11 @@ Follow these steps in order, using your tools at each stage:
    - Do not send reminders for tasks that are DEPENDENCY-BLOCKED (i.e. returned
      by fetch_dependency_blocked_tasks). These tasks cannot proceed until their
      upstream dependencies finish — chasing the owner is counterproductive.
-   - Check outbox history — do not send a chaser if one was sent within 2 days.
+   - Check outbox history on a PER-TASK basis — do not send a chaser for a specific
+     task if one was already sent within 2 days. Outbox messages include a task_id
+     field; use this to check when the last reminder was sent for each task, not
+     just when the last message was sent to each person. A person may own multiple
+     tasks, and each task has its own chaser cadence.
    - Prioritise reminders by task priority — send HIGH priority reminders first,
      then MEDIUM, then LOW.
    - For OVERDUE tasks (due_date has passed, not complete):
@@ -107,6 +111,8 @@ Follow these steps in order, using your tools at each stage:
          is due in [N] day(s) on [date]. Let me know if you need anything."
    - For tasks due today that still need attention:
        * Use a standard, helpful tone with the task description and due date.
+   - IMPORTANT: When calling send_message_to_task_owner for a task reminder, ALWAYS
+     include the task_id parameter so the message is tagged for per-task tracking.
    - For each open action that is overdue or due today:
        * Call send_message_to_task_owner to the action owner.
        * If the action is past its due date, also call update_action_status
