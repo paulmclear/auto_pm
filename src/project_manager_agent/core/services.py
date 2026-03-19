@@ -140,6 +140,10 @@ class ProjectService:
 
     # -- Journal -------------------------------------------------------------
 
+    def has_today_journal(self) -> bool:
+        """Check whether a journal entry already exists for today's date."""
+        return self.journal.has_today_entry()
+
     def read_last_journal(self) -> Optional[str]:
         return self.journal.read_last()
 

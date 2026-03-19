@@ -414,6 +414,10 @@ class FileJournalRepository:
         with open(past[0], "r", encoding="utf-8") as f:
             return f.read()
 
+    def has_today_entry(self) -> bool:
+        """Return True if a journal file already exists for today's date."""
+        return self._today_file.exists()
+
     def write(self, section: str, content: str) -> None:
         if not self._today_file.exists():
             with open(self._today_file, "w", encoding="utf-8") as f:

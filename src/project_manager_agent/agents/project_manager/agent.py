@@ -32,8 +32,9 @@ from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from project_manager_agent.core.date_utils import advance_reference_date
+from project_manager_agent.core.date_utils import REFERENCE_DATE, advance_reference_date
 from project_manager_agent.core.db.engine import create_tables
+from project_manager_agent.core.services import ProjectService
 from .tools import tools
 from .prompt import PM_SYSTEM_PROMPT
 
@@ -96,20 +97,41 @@ def build_graph():
 # Entry point
 # ---------------------------------------------------------------------------
 
+
+def _already_ran_today() -> bool:
+    """Check whether the daily loop has already completed for REFERENCE_DATE.
+
+    Looks for an existing journal entry — journal entries are written
+    throughout the daily loop, so their presence indicates a prior run.
+    """
+    svc = ProjectService()
+    try:
+        return svc.has_today_journal()
+    finally:
+        svc.close()
+
+
 if __name__ == "__main__":
     DATA_DIR = Path(__file__).resolve().parents[4] / "data"
     JOURNAL_DIR = DATA_DIR / "journal"
     JOURNAL_DIR.mkdir(parents=True, exist_ok=True)
     create_tables()
 
-    graph = build_graph()
-    graph.invoke(
-        {
-            "messages": [
-                SystemMessage(PM_SYSTEM_PROMPT),
-                HumanMessage("Please run your daily project management loop."),
-            ]
-        }
-    )
+    if _already_ran_today():
+        print(
+            f"⚠ Idempotency guard: daily loop already ran for {REFERENCE_DATE} "
+            f"(journal entry exists). Skipping to prevent duplicate messages "
+            f"and journal entries."
+        )
+    else:
+        graph = build_graph()
+        graph.invoke(
+            {
+                "messages": [
+                    SystemMessage(PM_SYSTEM_PROMPT),
+                    HumanMessage("Please run your daily project management loop."),
+                ]
+            }
+        )
 
-    advance_reference_date()
+        advance_reference_date()
