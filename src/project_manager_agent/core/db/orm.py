@@ -84,8 +84,12 @@ class MilestoneRow(Base):
     planned_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     forecast_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     actual_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
-    status: Mapped[str] = mapped_column(String, nullable=False)  # pending|achieved|missed
-    linked_task_ids: Mapped[str] = mapped_column(Text, nullable=False, default="[]")  # JSON list[int]
+    status: Mapped[str] = mapped_column(
+        String, nullable=False
+    )  # pending|achieved|missed
+    linked_task_ids: Mapped[str] = mapped_column(
+        Text, nullable=False, default="[]"
+    )  # JSON list[int]
 
     project: Mapped["ProjectRow"] = relationship(back_populates="milestones")
 
@@ -104,8 +108,13 @@ class TaskRow(Base):
     owner_email: Mapped[str] = mapped_column(String, nullable=False)
     due_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="not_started")
+    priority: Mapped[str] = mapped_column(
+        String, nullable=False, default="medium"
+    )  # high|medium|low
     phase_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    depends_on: Mapped[str] = mapped_column(Text, nullable=False, default="[]")  # JSON list[int]
+    depends_on: Mapped[str] = mapped_column(
+        Text, nullable=False, default="[]"
+    )  # JSON list[int]
     blocked_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     external_dependency: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -119,13 +128,19 @@ class RaidItemRow(Base):
     __tablename__ = "raid_items"
 
     raid_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String, nullable=False)  # risk|assumption|issue|decision
+    type: Mapped[str] = mapped_column(
+        String, nullable=False
+    )  # risk|assumption|issue|decision
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     owner: Mapped[str] = mapped_column(String, nullable=False)
     raised_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False)  # open|closed|accepted|superseded
-    linked_task_ids: Mapped[str] = mapped_column(Text, nullable=False, default="[]")  # JSON list[int]
+    status: Mapped[str] = mapped_column(
+        String, nullable=False
+    )  # open|closed|accepted|superseded
+    linked_task_ids: Mapped[str] = mapped_column(
+        Text, nullable=False, default="[]"
+    )  # JSON list[int]
 
     # Risk-specific
     probability: Mapped[str | None] = mapped_column(String, nullable=True)

@@ -9,6 +9,7 @@ from typing import Any, Literal, Optional
 # ---------------------------------------------------------------------------
 
 TaskStatus = Literal["not_started", "in_progress", "complete", "blocked"]
+TaskPriority = Literal["high", "medium", "low"]
 RagStatus = Literal["green", "amber", "red"]
 RaidType = Literal["risk", "assumption", "issue", "decision"]
 RaidStatus = Literal["open", "closed", "accepted", "superseded"]
@@ -33,6 +34,7 @@ class Task:
     owner_email: str
     due_date: dt.date
     status: TaskStatus = "not_started"
+    priority: TaskPriority = "medium"
     phase_id: Optional[int] = None
     depends_on: list = field(default_factory=list)  # list of task_ids
     blocked_reason: Optional[str] = None

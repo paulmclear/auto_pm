@@ -47,6 +47,7 @@ def _task_to_domain(row: TaskRow) -> Task:
         owner_email=row.owner_email,
         due_date=row.due_date,
         status=row.status,
+        priority=row.priority,
         phase_id=row.phase_id,
         depends_on=json.loads(row.depends_on),
         blocked_reason=row.blocked_reason,

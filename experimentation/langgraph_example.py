@@ -128,7 +128,6 @@ def build_agent():
 
 
 if __name__ == "__main__":
-
     agent = build_agent()
 
     # Show the agent
@@ -137,7 +136,7 @@ if __name__ == "__main__":
 
     # Invoke
     messages = [HumanMessage(content="Add 3 and 4.")]
-    
+
     # this will run all at once
     # messages = agent.invoke({"messages": messages})
     # for m in messages["messages"]:

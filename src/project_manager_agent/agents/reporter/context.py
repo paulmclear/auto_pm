@@ -107,7 +107,8 @@ def format_context(ctx: dict) -> str:
         "=== TASKS ===",
         *[
             f"  [{t.status.upper()}] Task {t.task_id}: {t.description} "
-            f"(owner: {t.owner_name}, due: {t.due_date}, phase: {t.phase_id}"
+            f"(owner: {t.owner_name}, due: {t.due_date}, "
+            f"priority: {t.priority.upper()}, phase: {t.phase_id}"
             + (f", depends_on: {t.depends_on}" if t.depends_on else "")
             + (f", BLOCKED: {t.blocked_reason}" if t.blocked_reason else "")
             + (f", ext dep: {t.external_dependency}" if t.external_dependency else "")
