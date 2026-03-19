@@ -100,3 +100,14 @@ after each iteration and it's included in prompts for context.
   - Using `Text` for JSON list fields is simpler than `JSON` type since SQLite (likely target) has limited JSON support
   - Naming convention `*Row` keeps ORM models distinct from domain dataclasses
 ---
+
+## 2026-03-19 - pm-609.9
+- Created `tests/test_repositories.py` with 34 unit tests covering all 6 repository implementations
+- Tests: SqliteTaskRepository (7), SqliteProjectRepository (6), SqliteRaidRepository (6), SqliteActionRepository (5), SqliteMessageRepository (4), FileJournalRepository (6)
+- All tests use `sqlite:///:memory:` for isolation; FileJournalRepository tests use pytest `tmp_path`
+- Files changed: `tests/__init__.py` (new), `tests/test_repositories.py` (new)
+- **Learnings:**
+  - `unittest.mock.patch` on `REFERENCE_DATE` works cleanly for FileJournalRepository tests since it's imported as a module-level constant
+  - pytest `tmp_path` fixture is perfect for FileJournalRepository — no manual cleanup needed
+  - Seeding test data requires `session.flush()` after adding ProjectRow to get the auto-incremented `id` for FK references in phases/milestones
+---
