@@ -1,43 +1,86 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — {{ project.name }}{% endblock %}
 {% block content %}
-<h1>{{ project.name }}</h1>
-<p>{{ project.description }}</p>
-
-<div class="card">
-    <h2>Project Health</h2>
-    <p>
-        <span class="badge badge-{{ project.rag_status }}">{{ project.rag_status | upper }}</span>
-        {{ project.rag_reason }}
-    </p>
-    <p><strong>Planned:</strong> {{ project.planned_start }} → {{ project.planned_end }}
-       | <strong>Forecast end:</strong> {{ project.forecast_end }}</p>
+<div class="md:flex md:items-center md:justify-between mb-8">
+    <div class="min-w-0 flex-1">
+        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">{{ project.name }}</h1>
+        <p class="mt-1 text-sm text-gray-500">{{ project.description }}</p>
+    </div>
+    <div class="mt-4 md:mt-0 md:ml-4">
+        {% set rag_colors = {'green': 'bg-green-100 text-green-800 ring-green-600/20', 'amber': 'bg-yellow-100 text-yellow-800 ring-yellow-600/20', 'red': 'bg-red-100 text-red-800 ring-red-600/20'} %}
+        <span class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset {{ rag_colors[project.rag_status] }}">
+            {{ project.rag_status | upper }}
+        </span>
+    </div>
 </div>
 
-<h2>Task Summary</h2>
-<div class="stats">
-    <div class="stat"><div class="number">{{ task_counts.total }}</div><div class="label">Total</div></div>
-    <div class="stat"><div class="number">{{ task_counts.not_started }}</div><div class="label">Not Started</div></div>
-    <div class="stat"><div class="number">{{ task_counts.in_progress }}</div><div class="label">In Progress</div></div>
-    <div class="stat"><div class="number">{{ task_counts.complete }}</div><div class="label">Complete</div></div>
-    <div class="stat"><div class="number">{{ task_counts.blocked }}</div><div class="label">Blocked</div></div>
+<!-- RAG reason -->
+<div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6 mb-8">
+    <h2 class="text-base font-semibold leading-6 text-gray-900">Project Health</h2>
+    <p class="mt-2 text-sm text-gray-600">{{ project.rag_reason }}</p>
+    <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3 text-sm">
+        <div>
+            <dt class="font-medium text-gray-500">Planned</dt>
+            <dd class="mt-1 text-gray-900">{{ project.planned_start }} &rarr; {{ project.planned_end }}</dd>
+        </div>
+        <div>
+            <dt class="font-medium text-gray-500">Actual Start</dt>
+            <dd class="mt-1 text-gray-900">{{ project.actual_start }}</dd>
+        </div>
+        <div>
+            <dt class="font-medium text-gray-500">Forecast End</dt>
+            <dd class="mt-1 text-gray-900">{{ project.forecast_end }}</dd>
+        </div>
+    </dl>
 </div>
 
-<h2>Milestones</h2>
-<table>
-    <thead>
-        <tr><th>Milestone</th><th>Planned</th><th>Forecast</th><th>Actual</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-        {% for m in project.milestones %}
-        <tr>
-            <td>{{ m.name }}</td>
-            <td>{{ m.planned_date }}</td>
-            <td>{{ m.forecast_date }}</td>
-            <td>{{ m.actual_date or "—" }}</td>
-            <td><span class="badge badge-{{ m.status }}">{{ m.status }}</span></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- Task summary stats -->
+<h2 class="text-base font-semibold leading-6 text-gray-900 mb-4">Task Summary</h2>
+<dl class="grid grid-cols-2 gap-4 sm:grid-cols-5 mb-8">
+    {% set stats = [
+        ('Total', task_counts.total, 'bg-white', 'text-gray-900'),
+        ('Not Started', task_counts.not_started, 'bg-white', 'text-gray-500'),
+        ('In Progress', task_counts.in_progress, 'bg-white', 'text-blue-600'),
+        ('Complete', task_counts.complete, 'bg-white', 'text-green-600'),
+        ('Blocked', task_counts.blocked, 'bg-white', 'text-red-600'),
+    ] %}
+    {% for label, count, bg, color in stats %}
+    <div class="{{ bg }} rounded-lg shadow-sm ring-1 ring-gray-900/5 px-4 py-5 text-center">
+        <dd class="text-3xl font-semibold tracking-tight {{ color }}">{{ count }}</dd>
+        <dt class="mt-1 text-sm text-gray-500">{{ label }}</dt>
+    </div>
+    {% endfor %}
+</dl>
+
+<!-- Milestones -->
+<h2 class="text-base font-semibold leading-6 text-gray-900 mb-4">Milestones</h2>
+<div class="overflow-hidden rounded-lg shadow-sm ring-1 ring-gray-900/5">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Milestone</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Planned</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Forecast</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Actual</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+            {% for m in project.milestones %}
+            <tr>
+                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{{ m.name }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ m.planned_date }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ m.forecast_date }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ m.actual_date or "\u2014" }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-sm">
+                    {% set ms_colors = {'pending': 'bg-yellow-50 text-yellow-700 ring-yellow-600/20', 'achieved': 'bg-green-50 text-green-700 ring-green-600/20', 'missed': 'bg-red-50 text-red-700 ring-red-600/20'} %}
+                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ ms_colors.get(m.status, 'bg-gray-50 text-gray-600 ring-gray-500/10') }}">{{ m.status | capitalize }}</span>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">No milestones defined.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

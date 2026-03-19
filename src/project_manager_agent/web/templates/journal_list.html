@@ -1,14 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Journal{% endblock %}
 {% block content %}
-<h1>Journal Entries</h1>
+<div class="md:flex md:items-center md:justify-between mb-6">
+    <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Journal Entries</h1>
+</div>
+
 {% if dates %}
-<ul class="date-list">
+<ul role="list" class="divide-y divide-gray-100 rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
     {% for date in dates %}
-    <li><a href="/journal/{{ date }}">{{ date }}</a></li>
+    <li>
+        <a href="/journal/{{ date }}" class="flex items-center justify-between gap-x-6 px-5 py-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-x-4">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
+                    <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-900">{{ date }}</span>
+            </div>
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    </li>
     {% endfor %}
 </ul>
 {% else %}
-<p>No journal entries found.</p>
+<div class="text-center rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 px-6 py-14">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+    <h3 class="mt-2 text-sm font-semibold text-gray-900">No journal entries</h3>
+    <p class="mt-1 text-sm text-gray-500">Journal entries will appear here after the agent runs.</p>
+</div>
 {% endif %}
 {% endblock %}

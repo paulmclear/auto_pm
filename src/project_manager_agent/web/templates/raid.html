@@ -1,33 +1,75 @@
 {% extends "base.html" %}
 {% block title %}RAID Log{% endblock %}
 {% block content %}
-<h1>RAID Log</h1>
+<div class="md:flex md:items-center md:justify-between mb-6">
+    <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">RAID Log</h1>
+</div>
 
 <div x-data="{ tab: 'all' }">
-    <div class="filter-bar">
-        <button @click="tab = 'all'" :class="tab === 'all' ? '' : 'outline'">All</button>
-        <button @click="tab = 'risk'" :class="tab === 'risk' ? '' : 'outline'">Risks</button>
-        <button @click="tab = 'assumption'" :class="tab === 'assumption' ? '' : 'outline'">Assumptions</button>
-        <button @click="tab = 'issue'" :class="tab === 'issue' ? '' : 'outline'">Issues</button>
-        <button @click="tab = 'decision'" :class="tab === 'decision' ? '' : 'outline'">Decisions</button>
+    <!-- Filter tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex gap-x-6" aria-label="Tabs">
+            {% set tabs = [('all', 'All'), ('risk', 'Risks'), ('assumption', 'Assumptions'), ('issue', 'Issues'), ('decision', 'Decisions')] %}
+            {% for val, label in tabs %}
+            <button @click="tab = '{{ val }}'"
+                    :class="tab === '{{ val }}'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
+                    class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors">
+                {{ label }}
+            </button>
+            {% endfor %}
+        </nav>
     </div>
 
-    <table>
-        <thead>
-            <tr><th>ID</th><th>Type</th><th>Title</th><th>Owner</th><th>Raised</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-            <tr x-show="tab === 'all' || tab === '{{ item.type }}'">
-                <td>{{ item.raid_id }}</td>
-                <td>{{ item.type | capitalize }}</td>
-                <td>{{ item.title }}</td>
-                <td>{{ item.owner }}</td>
-                <td>{{ item.raised_date }}</td>
-                <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Table -->
+    <div class="overflow-hidden rounded-lg shadow-sm ring-1 ring-gray-900/5">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">ID</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Title</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Owner</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Raised</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+                {% for item in items %}
+                <tr x-show="tab === 'all' || tab === '{{ item.type }}'" class="hover:bg-gray-50">
+                    <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{{ item.raid_id }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                        {% set type_colors = {
+                            'risk': 'bg-orange-50 text-orange-700 ring-orange-600/20',
+                            'assumption': 'bg-purple-50 text-purple-700 ring-purple-700/10',
+                            'issue': 'bg-red-50 text-red-700 ring-red-600/10',
+                            'decision': 'bg-blue-50 text-blue-700 ring-blue-700/10'
+                        } %}
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ type_colors.get(item.type, 'bg-gray-50 text-gray-600 ring-gray-500/10') }}">
+                            {{ item.type | capitalize }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 max-w-md">{{ item.title }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ item.owner }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ item.raised_date }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                        {% set status_colors = {
+                            'open': 'bg-blue-50 text-blue-700 ring-blue-700/10',
+                            'closed': 'bg-gray-50 text-gray-600 ring-gray-500/10',
+                            'accepted': 'bg-green-50 text-green-700 ring-green-600/20',
+                            'superseded': 'bg-gray-50 text-gray-600 ring-gray-500/10'
+                        } %}
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ status_colors.get(item.status, 'bg-gray-50 text-gray-600 ring-gray-500/10') }}">
+                            {{ item.status | capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">No RAID items found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
