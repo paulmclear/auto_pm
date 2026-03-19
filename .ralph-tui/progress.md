@@ -64,6 +64,19 @@ after each iteration and it's included in prompts for context.
   - Existing JSON repos don't yet conform to these protocols (e.g. `ProjectRepo.read()` returns `dict`, not `Project`) — SQL implementations will be the first to satisfy them
 ---
 
+## 2026-03-19 - pm-609.6
+- Created `core/db/repositories.py` with 6 concrete repository implementations satisfying Protocol interfaces
+- SQL repos: `SqliteTaskRepository`, `SqliteProjectRepository`, `SqliteRaidRepository`, `SqliteActionRepository`, `SqliteMessageRepository` — each accepts a `Session` in constructor
+- `FileJournalRepository` wraps file-based journal logic behind `JournalRepository` protocol, accepts `journal_dir: Path`
+- 7 `_to_domain()` helper functions map ORM Row objects to domain dataclasses (handling JSON-encoded list fields)
+- Each write method commits immediately via `session.commit()`
+- Files changed: `src/project_manager_agent/core/db/repositories.py` (new)
+- **Learnings:**
+  - JSON list fields (depends_on, linked_task_ids, objectives) need `json.loads()` on read and `json.dumps()` on write — easy to forget on the write side
+  - `session.get(Model, pk)` is the clean way to fetch by primary key in SQLAlchemy 2.0
+  - `FileJournalRepository` reuses the same logic as the existing `Journal` class but parameterised with `journal_dir` instead of a class-level constant
+---
+
 ## 2026-03-19 - pm-609.4
 - Created `core/db/__init__.py` and `core/db/orm.py` with SQLAlchemy 2.0 declarative ORM models
 - 7 tables: `projects`, `phases` (FK→projects), `milestones` (FK→projects), `tasks`, `raid_items`, `actions`, `messages`
