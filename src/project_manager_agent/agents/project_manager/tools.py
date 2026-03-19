@@ -5,20 +5,35 @@ Tool functions, Pydantic input schemas, and LangChain tool instances used by
 the project manager agent.
 """
 
+import datetime as dt
+from dataclasses import asdict
 from typing import Literal, Optional
 
 from langchain_core.tools import Tool, StructuredTool
 from pydantic import BaseModel
 
 from project_manager_agent.core.date_utils import REFERENCE_DATE
-from project_manager_agent.core.repositories import (
-    TasksRepo,
-    ProjectRepo,
-    RaidRepo,
-    ActionsRepo,
-    Mailbox,
-    Journal,
-)
+from project_manager_agent.core.models import Action, RaidItem
+from project_manager_agent.core.services import ProjectService
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _serialize(obj: object) -> dict:
+    """Convert a dataclass to a JSON-safe dict (dt.date → ISO string)."""
+    d = asdict(obj)  # type: ignore[arg-type]
+    for k, v in d.items():
+        if isinstance(v, dt.date):
+            d[k] = v.isoformat()
+    return d
+
+
+def _parse_date(s: Optional[str]) -> Optional[dt.date]:
+    """Parse an ISO date string, returning None if input is None."""
+    return dt.date.fromisoformat(s) if s else None
 
 
 # ---------------------------------------------------------------------------
@@ -26,63 +41,110 @@ from project_manager_agent.core.repositories import (
 # ---------------------------------------------------------------------------
 
 
+def fetch_tasks() -> list[dict]:
+    svc = ProjectService()
+    try:
+        return [_serialize(t) for t in svc.read_tasks()]
+    finally:
+        svc.close()
+
+
 def read_last_journal() -> str:
-    content = Journal().read_last()
-    return content if content is not None else "No previous journal found."
+    svc = ProjectService()
+    try:
+        content = svc.read_last_journal()
+        return content if content is not None else "No previous journal found."
+    finally:
+        svc.close()
 
 
 def read_outbox() -> list[dict]:
-    return Mailbox().read_outbox()
+    svc = ProjectService()
+    try:
+        return [_serialize(m) for m in svc.read_outbox()]
+    finally:
+        svc.close()
 
 
 def read_inbox() -> list[dict]:
-    return Mailbox().read_inbox()
+    svc = ProjectService()
+    try:
+        return [_serialize(m) for m in svc.read_inbox()]
+    finally:
+        svc.close()
 
 
 def send_message(owner_name: str, owner_email: str, message: str) -> str:
-    Mailbox().send(owner_name, owner_email, message)
-    print(f"Message queued for {owner_name} ({owner_email}): {message}")
-    return f"Message queued for {owner_name}"
+    svc = ProjectService()
+    try:
+        svc.send_message(owner_name, owner_email, message)
+        print(f"Message queued for {owner_name} ({owner_email}): {message}")
+        return f"Message queued for {owner_name}"
+    finally:
+        svc.close()
 
 
 def update_task_status(task_id: int, status: str) -> str:
+    svc = ProjectService()
     try:
-        TasksRepo().update_status(task_id, status)  # type: ignore[arg-type]
+        svc.update_task_status(task_id, status)  # type: ignore[arg-type]
         print(f"Task {task_id} status updated to '{status}'")
         return f"Task {task_id} status updated to '{status}'"
     except ValueError as e:
         return str(e)
+    finally:
+        svc.close()
 
 
 def update_task_blocking(
     task_id: int, blocked_reason: Optional[str], depends_on: Optional[list]
 ) -> str:
+    svc = ProjectService()
     try:
-        TasksRepo().update_blocking(task_id, blocked_reason, depends_on)
+        svc.update_task_blocking(task_id, blocked_reason, depends_on)
         return f"Task {task_id} blocking info updated."
     except ValueError as e:
         return str(e)
+    finally:
+        svc.close()
 
 
 def write_journal_entry(section: str, content: str) -> str:
-    Journal().write(section, content)
-    return f"Journal entry written: {section}"
+    svc = ProjectService()
+    try:
+        svc.write_journal(section, content)
+        return f"Journal entry written: {section}"
+    finally:
+        svc.close()
 
 
 def fetch_project_plan() -> dict:
-    return ProjectRepo().read()
+    svc = ProjectService()
+    try:
+        project = svc.read_project()
+        return _serialize(project)
+    finally:
+        svc.close()
 
 
 def update_project_health(
     rag_status: Optional[str], rag_reason: Optional[str], forecast_end: Optional[str]
 ) -> str:
-    ProjectRepo().update_health(rag_status, rag_reason, forecast_end)
-    parts = []
-    if rag_status:
-        parts.append(f"RAG → {rag_status}")
-    if forecast_end:
-        parts.append(f"forecast end → {forecast_end}")
-    return "Project health updated: " + ", ".join(parts) if parts else "No changes."
+    svc = ProjectService()
+    try:
+        svc.update_health(
+            rag_status=rag_status,  # type: ignore[arg-type]
+            rag_reason=rag_reason,
+            forecast_end=_parse_date(forecast_end),
+        )
+        parts = []
+        if rag_status:
+            parts.append(f"RAG → {rag_status}")
+        if forecast_end:
+            parts.append(f"forecast end → {forecast_end}")
+        return "Project health updated: " + ", ".join(parts) if parts else "No changes."
+    finally:
+        svc.close()
 
 
 def update_milestone(
@@ -91,15 +153,27 @@ def update_milestone(
     forecast_date: Optional[str],
     actual_date: Optional[str],
 ) -> str:
+    svc = ProjectService()
     try:
-        ProjectRepo().update_milestone(milestone_id, status, forecast_date, actual_date)
+        svc.update_milestone(
+            milestone_id,
+            status=status,  # type: ignore[arg-type]
+            forecast_date=_parse_date(forecast_date),
+            actual_date=_parse_date(actual_date),
+        )
         return f"Milestone {milestone_id} updated."
     except ValueError as e:
         return str(e)
+    finally:
+        svc.close()
 
 
 def fetch_raid_items() -> list[dict]:
-    return RaidRepo().read()
+    svc = ProjectService()
+    try:
+        return [_serialize(r) for r in svc.read_raid()]
+    finally:
+        svc.close()
 
 
 def add_raid_item(
@@ -120,33 +194,37 @@ def add_raid_item(
     decision_date: Optional[str],
     alternatives_considered: Optional[str],
 ) -> str:
-    item = {
-        "raid_id": None,
-        "type": type,
-        "title": title,
-        "description": description,
-        "owner": owner,
-        "raised_date": REFERENCE_DATE.isoformat(),
-        "status": "open",
-        "linked_task_ids": linked_task_ids,
-        "probability": probability,
-        "impact": impact,
-        "mitigation": mitigation,
-        "review_date": review_date,
-        "validation_method": validation_method,
-        "validation_date": validation_date,
-        "validated_by": None,
-        "severity": severity,
-        "resolution": None,
-        "resolved_date": None,
-        "rationale": rationale,
-        "decided_by": decided_by,
-        "decision_date": decision_date,
-        "alternatives_considered": alternatives_considered,
-    }
-    raid_id = RaidRepo().add(item)
-    print(f"RAID item {raid_id} added: [{type}] {title}")
-    return f"RAID item {raid_id} added."
+    item = RaidItem(
+        raid_id=0,
+        type=type,  # type: ignore[arg-type]
+        title=title,
+        description=description,
+        owner=owner,
+        raised_date=REFERENCE_DATE,
+        status="open",
+        linked_task_ids=linked_task_ids,
+        probability=probability,  # type: ignore[arg-type]
+        impact=impact,  # type: ignore[arg-type]
+        mitigation=mitigation,
+        review_date=review_date,
+        validation_method=validation_method,
+        validation_date=validation_date,
+        validated_by=None,
+        severity=severity,  # type: ignore[arg-type]
+        resolution=None,
+        resolved_date=None,
+        rationale=rationale,
+        decided_by=decided_by,
+        decision_date=decision_date,
+        alternatives_considered=alternatives_considered,
+    )
+    svc = ProjectService()
+    try:
+        raid_id = svc.add_raid(item)
+        print(f"RAID item {raid_id} added: [{type}] {title}")
+        return f"RAID item {raid_id} added."
+    finally:
+        svc.close()
 
 
 def update_raid_item(
@@ -184,16 +262,23 @@ def update_raid_item(
         "decision_date": decision_date,
         "alternatives_considered": alternatives_considered,
     }
+    svc = ProjectService()
     try:
-        RaidRepo().update(raid_id, fields)
+        svc.update_raid(raid_id, fields)
         print(f"RAID item {raid_id} updated.")
         return f"RAID item {raid_id} updated."
     except ValueError as e:
         return str(e)
+    finally:
+        svc.close()
 
 
 def fetch_actions() -> list[dict]:
-    return ActionsRepo().read()
+    svc = ProjectService()
+    try:
+        return [_serialize(a) for a in svc.read_actions()]
+    finally:
+        svc.close()
 
 
 def add_action(
@@ -204,28 +289,35 @@ def add_action(
     source_raid_id: Optional[int],
     source_task_id: Optional[int],
 ) -> str:
-    action = {
-        "action_id": None,
-        "description": description,
-        "owner_name": owner_name,
-        "owner_email": owner_email,
-        "due_date": due_date,
-        "status": "open",
-        "source_raid_id": source_raid_id,
-        "source_task_id": source_task_id,
-    }
-    action_id = ActionsRepo().add(action)
-    print(f"Action {action_id} added: {description}")
-    return f"Action {action_id} added."
+    action = Action(
+        action_id=0,
+        description=description,
+        owner_name=owner_name,
+        owner_email=owner_email,
+        due_date=dt.date.fromisoformat(due_date),
+        status="open",
+        source_raid_id=source_raid_id,
+        source_task_id=source_task_id,
+    )
+    svc = ProjectService()
+    try:
+        action_id = svc.add_action(action)
+        print(f"Action {action_id} added: {description}")
+        return f"Action {action_id} added."
+    finally:
+        svc.close()
 
 
 def update_action_status(action_id: int, status: str) -> str:
+    svc = ProjectService()
     try:
-        ActionsRepo().update_status(action_id, status)  # type: ignore[arg-type]
+        svc.update_action_status(action_id, status)  # type: ignore[arg-type]
         print(f"Action {action_id} status updated to '{status}'")
         return f"Action {action_id} status updated to '{status}'"
     except ValueError as e:
         return str(e)
+    finally:
+        svc.close()
 
 
 # ---------------------------------------------------------------------------
@@ -352,7 +444,7 @@ fetch_tasks_tool = Tool(
         "Fetch all project tasks, including their phase, dependency, and "
         "blocking information."
     ),
-    func=lambda _: TasksRepo().read(),
+    func=lambda _: fetch_tasks(),
 )
 
 fetch_inbox_tool = Tool(
