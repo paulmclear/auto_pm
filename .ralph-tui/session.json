@@ -3,10 +3,10 @@
   "sessionId": "b33050d5-c5ec-4a7d-80b0-5e5923d5377f",
   "status": "running",
   "startedAt": "2026-03-19T09:50:57.939Z",
-  "updatedAt": "2026-03-19T09:52:00.938Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-03-19T09:59:01.944Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "model": "opus",
@@ -60,8 +60,8 @@
       {
         "id": "pm-609.8",
         "title": "Update pyproject.toml for src/ layout and SQLAlchemy dependency",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "pm-609.9",
@@ -71,7 +71,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "pm-609.8",
+      "taskTitle": "Update pyproject.toml for src/ layout and SQLAlchemy dependency",
+      "taskCompleted": true,
+      "durationMs": 55427,
+      "startedAt": "2026-03-19T09:51:05.083Z",
+      "endedAt": "2026-03-19T09:52:00.510Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/paulmclear/projects/_LEARNING/project_manager",
   "activeTaskIds": [],

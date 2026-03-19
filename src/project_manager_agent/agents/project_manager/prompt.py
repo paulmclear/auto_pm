@@ -1,4 +1,4 @@
-from ..date_utils import REFERENCE_DATE
+from project_manager_agent.core.date_utils import REFERENCE_DATE
 
 PM_SYSTEM_PROMPT = f"""You are a project manager running your daily check-in. Today is {REFERENCE_DATE}.
 

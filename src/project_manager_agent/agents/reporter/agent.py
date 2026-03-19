@@ -19,8 +19,8 @@ Report sections:
   8. Open Actions               — overdue and due-soon action items
 
 Run from the project root:
-    python -m project_manager_agent.reporter.agent
-    python -m project_manager_agent.reporter.agent --output path/to/report.md
+    python -m project_manager_agent.agents.reporter.agent
+    python -m project_manager_agent.agents.reporter.agent --output path/to/report.md
 """
 
 import argparse
@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from ..date_utils import REFERENCE_DATE
+from project_manager_agent.core.date_utils import REFERENCE_DATE
 from .context import load_all, format_context
 from .prompt import REPORT_SYSTEM_PROMPT
 

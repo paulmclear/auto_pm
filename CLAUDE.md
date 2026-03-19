@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Run the project manager agent (daily loop)
-uv run python -m project_manager_agent.project_manager.agent
+uv run python -m project_manager_agent.agents.project_manager.agent
 
 # Run the reporter (generate a status report)
-uv run python -m project_manager_agent.reporter.agent
-uv run python -m project_manager_agent.reporter.agent --output path/to/report.md
+uv run python -m project_manager_agent.agents.reporter.agent
+uv run python -m project_manager_agent.agents.reporter.agent --output path/to/report.md
 
 # Load the demo scenario (Customer Portal Modernisation, date=2026-03-20)
 uv run python create_demo_data.py
@@ -28,20 +28,20 @@ uv run ruff format .
 
 This is a **LangGraph-based AI project management agent** with two independent sub-agents:
 
-### Project Manager Agent (`project_manager_agent/project_manager/`)
+### Project Manager Agent (`src/project_manager_agent/agents/project_manager/`)
 Runs a structured daily loop via a two-node LangGraph graph:
 - `project-manager` node — LLM (gpt-4o-mini) that decides which tools to call
 - `tools` node — executes chosen tools via `langgraph.prebuilt.ToolNode`
 
 The agent follows a fixed sequence: read journal → review project plan → review RAID log → read inbox → review tasks → send reminders → update health → write journal. All logic is driven by the LLM using the tool set defined in `tools.py`.
 
-### Reporter Agent (`project_manager_agent/reporter/`)
+### Reporter Agent (`src/project_manager_agent/agents/reporter/`)
 Not agentic — a straight LLM call. `context.py` reads all data sources and formats them into a prompt string; `reporter/agent.py` sends this to the LLM and writes the markdown report to `data/reports/`.
 
-### Simulated Time (`date_utils.py`)
+### Simulated Time (`core/date_utils.py`)
 `REFERENCE_DATE` is loaded at import time from `data/date.json`. It is **not** real time. After each agent run, `advance_reference_date()` increments it by one day. To jump to a specific date, edit `data/date.json` directly: `{"reference_date": "2026-03-20"}`.
 
-### Data Layer (`repositories.py`)
+### Data Layer (`core/repositories.py`)
 All state is stored as flat JSON/JSONL files under `data/`:
 
 | File | Repository | Notes |
@@ -57,10 +57,10 @@ All state is stored as flat JSON/JSONL files under `data/`:
 
 Repos are instantiated fresh on each call (no shared state). All repos have an `initialise()` method that seeds sample data if the file doesn't exist.
 
-### Models (`models.py`)
+### Models (`core/models.py`)
 Pure Python `dataclass` definitions: `Task`, `Phase`, `Milestone`, `Project`, `RaidItem`, `Action`. Dates are `dt.date` objects. `JsonSerialiser` extends `json.JSONEncoder` to handle `dt.date` → ISO string.
 
-### Tools (`project_manager/tools.py`)
+### Tools (`agents/project_manager/tools.py`)
 Plain functions wrapped with `langchain_core.tools.Tool` (for zero-arg tools using `lambda _:`) or `StructuredTool` + Pydantic input schema (for multi-arg tools). The `tools` list at the bottom is what gets bound to the LLM.
 
 ## Backlog

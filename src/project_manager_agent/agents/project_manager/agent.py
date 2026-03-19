@@ -19,7 +19,7 @@ The agent is built with LangGraph. The graph has two nodes:
   - tools:           executes the chosen tool and returns the result.
 
 Run from the project root:
-    python -m project_manager_agent.project_manager.agent
+    python -m project_manager_agent.agents.project_manager.agent
 """
 
 from typing import Annotated, TypedDict
@@ -31,8 +31,15 @@ from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from ..date_utils import advance_reference_date
-from ..repositories import Mailbox, Journal, TasksRepo, ProjectRepo, RaidRepo, ActionsRepo
+from project_manager_agent.core.date_utils import advance_reference_date
+from project_manager_agent.core.repositories import (
+    Mailbox,
+    Journal,
+    TasksRepo,
+    ProjectRepo,
+    RaidRepo,
+    ActionsRepo,
+)
 from .tools import tools
 from .prompt import PM_SYSTEM_PROMPT
 

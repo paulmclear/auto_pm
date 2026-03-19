@@ -4,8 +4,13 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Optional
 
-from .date_utils import REFERENCE_DATE
-from .models import Task, TaskStatus, ActionStatus, JsonSerialiser
+from project_manager_agent.core.date_utils import REFERENCE_DATE
+from project_manager_agent.core.models import (
+    Task,
+    TaskStatus,
+    ActionStatus,
+    JsonSerialiser,
+)
 
 
 # ---------------------------------------------------------------------------

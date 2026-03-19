@@ -10,8 +10,15 @@ from typing import Literal, Optional
 from langchain_core.tools import Tool, StructuredTool
 from pydantic import BaseModel
 
-from ..date_utils import REFERENCE_DATE
-from ..repositories import TasksRepo, ProjectRepo, RaidRepo, ActionsRepo, Mailbox, Journal
+from project_manager_agent.core.date_utils import REFERENCE_DATE
+from project_manager_agent.core.repositories import (
+    TasksRepo,
+    ProjectRepo,
+    RaidRepo,
+    ActionsRepo,
+    Mailbox,
+    Journal,
+)
 
 
 # ---------------------------------------------------------------------------

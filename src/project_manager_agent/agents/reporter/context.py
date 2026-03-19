@@ -7,8 +7,14 @@ the report-generation LLM.
 
 import datetime as dt
 
-from ..date_utils import REFERENCE_DATE
-from ..repositories import TasksRepo, ProjectRepo, RaidRepo, ActionsRepo, Journal
+from project_manager_agent.core.date_utils import REFERENCE_DATE
+from project_manager_agent.core.repositories import (
+    TasksRepo,
+    ProjectRepo,
+    RaidRepo,
+    ActionsRepo,
+    Journal,
+)
 
 
 def load_all() -> dict:
