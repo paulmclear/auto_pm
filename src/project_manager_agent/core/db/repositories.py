@@ -414,6 +414,22 @@ class FileJournalRepository:
         with open(past[0], "r", encoding="utf-8") as f:
             return f.read()
 
+    def read_range(self, start: dt.date, end: dt.date) -> dict[dt.date, str]:
+        """Read all journal entries between *start* and *end* (inclusive).
+
+        Returns a dict mapping date → journal content, sorted oldest-first.
+        """
+        results: dict[dt.date, str] = {}
+        for f in sorted(self._journal_dir.glob("*.md")):
+            try:
+                file_date = dt.date.fromisoformat(f.stem)
+            except ValueError:
+                continue
+            if start <= file_date <= end:
+                with open(f, "r", encoding="utf-8") as fh:
+                    results[file_date] = fh.read()
+        return results
+
     def has_today_entry(self) -> bool:
         """Return True if a journal file already exists for today's date."""
         return self._today_file.exists()

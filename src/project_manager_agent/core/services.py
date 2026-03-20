@@ -147,6 +147,10 @@ class ProjectService:
     def read_last_journal(self) -> Optional[str]:
         return self.journal.read_last()
 
+    def read_journals_range(self, start: dt.date, end: dt.date) -> dict[dt.date, str]:
+        """Read all journal entries between start and end (inclusive)."""
+        return self.journal.read_range(start, end)
+
     def write_journal(self, section: str, content: str) -> None:
         self.journal.write(section, content)
 
