@@ -134,4 +134,12 @@ if __name__ == "__main__":
             }
         )
 
+        # Write machine-readable status snapshot for external consumers
+        svc = ProjectService()
+        try:
+            status_path = svc.write_status_snapshot()
+            print(f"Status snapshot written to {status_path}")
+        finally:
+            svc.close()
+
         advance_reference_date()

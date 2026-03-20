@@ -7,8 +7,9 @@ methods so callers never need to know about individual repositories.
 from __future__ import annotations
 
 import datetime as dt
+import json
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -161,6 +162,106 @@ class ProjectService:
         if not REPORTS_DIR.exists():
             return []
         return sorted(REPORTS_DIR.glob("*.md"))
+
+    # -- Status snapshot -----------------------------------------------------
+
+    def write_status_snapshot(self) -> Path:
+        """Write a machine-readable JSON snapshot of current project state.
+
+        The snapshot includes task states, project health, milestone statuses,
+        RAID summary, action summary, and key metrics.  Written to
+        ``data/status.json`` so external tools can consume it without parsing
+        journals or querying the DB directly.
+        """
+        from project_manager_agent.core.date_utils import REFERENCE_DATE
+
+        project = self.read_project()
+        tasks = self.read_tasks()
+        raid_items = self.read_raid()
+        actions = self.read_actions()
+
+        # Task metrics
+        status_counts: dict[str, int] = {}
+        overdue_count = 0
+        for t in tasks:
+            status_counts[t.status] = status_counts.get(t.status, 0) + 1
+            if t.due_date < REFERENCE_DATE and t.status != "complete":
+                overdue_count += 1
+
+        # Milestone summary
+        milestones = []
+        for m in project.milestones:
+            milestones.append(
+                {
+                    "milestone_id": m.milestone_id,
+                    "name": m.name,
+                    "status": m.status,
+                    "planned_date": m.planned_date.isoformat(),
+                    "forecast_date": m.forecast_date.isoformat(),
+                    "actual_date": m.actual_date.isoformat() if m.actual_date else None,
+                }
+            )
+
+        # RAID summary
+        raid_counts: dict[str, dict[str, int]] = {}
+        for r in raid_items:
+            raid_counts.setdefault(r.type, {"open": 0, "closed": 0})
+            if r.status == "open":
+                raid_counts[r.type]["open"] += 1
+            else:
+                raid_counts[r.type]["closed"] += 1
+
+        # Action summary
+        action_status_counts: dict[str, int] = {}
+        for a in actions:
+            action_status_counts[a.status] = action_status_counts.get(a.status, 0) + 1
+
+        # Task details
+        task_list = []
+        for t in tasks:
+            task_list.append(
+                {
+                    "task_id": t.task_id,
+                    "description": t.description,
+                    "owner_name": t.owner_name,
+                    "status": t.status,
+                    "priority": t.priority,
+                    "due_date": t.due_date.isoformat(),
+                    "blocked_reason": t.blocked_reason,
+                    "depends_on": t.depends_on,
+                }
+            )
+
+        snapshot: dict[str, Any] = {
+            "reference_date": REFERENCE_DATE.isoformat(),
+            "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "project": {
+                "name": project.name,
+                "rag_status": project.rag_status,
+                "rag_reason": project.rag_reason,
+                "planned_end": project.planned_end.isoformat(),
+                "forecast_end": project.forecast_end.isoformat(),
+                "sponsor": project.sponsor,
+                "project_manager": project.project_manager,
+            },
+            "metrics": {
+                "total_tasks": len(tasks),
+                "tasks_by_status": status_counts,
+                "overdue_tasks": overdue_count,
+                "total_raid_items": len(raid_items),
+                "raid_by_type": raid_counts,
+                "total_actions": len(actions),
+                "actions_by_status": action_status_counts,
+            },
+            "milestones": milestones,
+            "tasks": task_list,
+        }
+
+        status_path = DATA_DIR / "status.json"
+        with open(status_path, "w", encoding="utf-8") as f:
+            json.dump(snapshot, f, indent=2)
+
+        return status_path
 
     # -- Lifecycle -----------------------------------------------------------
 
