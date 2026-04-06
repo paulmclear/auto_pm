@@ -3,12 +3,13 @@ Reset Script
 ============
 Clears all runtime data to allow a clean test run:
   - Drops and recreates all SQL tables in the SQLite database
-  - Deletes all journal files in data/journal/
+  - Deletes all journal files in data/journal/ (including project subdirectories)
   - Optionally deletes all reports in data/reports/ (--reports flag)
   - Resets data/date.json to START_DATE
 """
 
 import json
+import shutil
 import argparse
 from pathlib import Path
 
@@ -32,16 +33,25 @@ def reset(start_date: str = START_DATE, clear_reports: bool = False) -> None:
     create_tables()
     cleared.append("SQL tables dropped and recreated")
 
-    # Delete journal markdown files
-    for journal in JOURNAL_DIR.glob("*.md"):
-        journal.unlink()
-        cleared.append(str(journal))
+    # Delete journal markdown files (top-level and project subdirectories)
+    if JOURNAL_DIR.exists():
+        for item in JOURNAL_DIR.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+                cleared.append(f"{item}/ (directory)")
+            elif item.suffix == ".md":
+                item.unlink()
+                cleared.append(str(item))
 
-    # Optionally delete reports
-    if clear_reports:
-        for report in REPORTS_DIR.glob("*.md"):
-            report.unlink()
-            cleared.append(str(report))
+    # Optionally delete reports (top-level and project subdirectories)
+    if clear_reports and REPORTS_DIR.exists():
+        for item in REPORTS_DIR.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+                cleared.append(f"{item}/ (directory)")
+            elif item.suffix == ".md":
+                item.unlink()
+                cleared.append(str(item))
 
     # Reset reference date
     with open(DATE_FILE, "w", encoding="utf-8") as f:

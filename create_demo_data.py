@@ -1,19 +1,13 @@
 """
 Demo Data Setup
 ===============
-Populates the SQL database with a realistic mid-project scenario for testing
+Populates the SQL database with realistic mid-project scenarios for testing
 and demos.  Also seeds journal files and sets the reference date.
 
-Scenario: "Customer Portal Modernisation"
-  - Phase 1 (Discovery) is complete with milestone achieved.
-  - Phase 2 (Design & Build) is in progress — one task blocked, milestone slipping.
-  - Phase 3 (Testing & Launch) is not yet started.
-  - RAG is AMBER due to milestone slip caused by a blocked database task.
-  - RAID log contains risks, an open issue, two assumptions (one validated,
-    one overdue for validation), and two decisions.
-  - One action is overdue, two are open.
-  - Inbox contains two messages awaiting processing.
-  - Date is set to 2026-03-20 (mid-project).
+Projects seeded:
+  1. Customer Portal Modernisation (AMBER) — blocked DB migration
+  2. Data Platform Migration (GREEN) — on track, steady progress
+  3. Mobile Banking App Refresh (RED) — critical vendor SDK bug
 
 Run from the project root:
     python create_demo_data.py
@@ -23,7 +17,7 @@ import json
 from pathlib import Path
 
 from project_manager_agent.core.db.engine import create_tables, get_session
-from project_manager_agent.core.db.seed import seed_demo_data
+from project_manager_agent.core.db.seed import seed_all_demo_data
 
 DATA = Path("data")
 DATE = {"reference_date": "2026-03-20"}
@@ -38,20 +32,24 @@ def create() -> None:
     # Create SQL tables and seed demo data
     create_tables()
     with get_session() as session:
-        seed_demo_data(session)
+        project_ids = seed_all_demo_data(session)
 
     # Set reference date
     with open(DATA / "date.json", "w", encoding="utf-8") as f:
         json.dump(DATE, f)
 
-    print("Demo data created:")
-    print("  Project:  Customer Portal Modernisation")
+    print(f"Demo data created ({len(project_ids)} projects):")
+    print()
+    print("  1. Customer Portal Modernisation")
+    print("     RAG: AMBER | Tasks: 11 | RAID: 7 | Actions: 3 | Inbox: 2")
+    print()
+    print("  2. Data Platform Migration")
+    print("     RAG: GREEN | Tasks: 9 | RAID: 4 | Actions: 2 | Inbox: 2")
+    print()
+    print("  3. Mobile Banking App Refresh")
+    print("     RAG: RED   | Tasks: 9 | RAID: 5 | Actions: 3 | Inbox: 2")
+    print()
     print(f"  Date:     {DATE['reference_date']}")
-    print("  RAG:      AMBER")
-    print("  Tasks:    11 (4 complete, 2 in progress, 1 blocked)")
-    print("  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)")
-    print("  Actions:  3 open (1 overdue)")
-    print("  Inbox:    2 unprocessed messages")
     print("  Database: data/project_manager.db")
 
 
