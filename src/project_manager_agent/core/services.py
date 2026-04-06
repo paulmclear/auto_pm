@@ -51,16 +51,21 @@ class ProjectService:
             svc.close()
     """
 
-    def __init__(self, session: Optional[Session] = None) -> None:
+    def __init__(
+        self,
+        session: Optional[Session] = None,
+        project_id: Optional[int] = None,
+    ) -> None:
         self._owns_session = session is None
         self._session: Session = session or SessionFactory()
+        self._project_id = project_id
 
-        self.tasks = SqliteTaskRepository(self._session)
-        self.project = SqliteProjectRepository(self._session)
-        self.raid = SqliteRaidRepository(self._session)
-        self.actions = SqliteActionRepository(self._session)
-        self.messages = SqliteMessageRepository(self._session)
-        self.journal = FileJournalRepository(JOURNAL_DIR)
+        self.tasks = SqliteTaskRepository(self._session, project_id=project_id)
+        self.project = SqliteProjectRepository(self._session, project_id=project_id)
+        self.raid = SqliteRaidRepository(self._session, project_id=project_id)
+        self.actions = SqliteActionRepository(self._session, project_id=project_id)
+        self.messages = SqliteMessageRepository(self._session, project_id=project_id)
+        self.journal = FileJournalRepository(JOURNAL_DIR, project_id=project_id)
 
     # -- Tasks ---------------------------------------------------------------
 
@@ -157,11 +162,18 @@ class ProjectService:
 
     # -- Reports -------------------------------------------------------------
 
+    @property
+    def _reports_dir(self) -> Path:
+        if self._project_id is not None:
+            return REPORTS_DIR / str(self._project_id)
+        return REPORTS_DIR
+
     def list_reports(self) -> list[Path]:
         """Return report file paths sorted by name (oldest first)."""
-        if not REPORTS_DIR.exists():
+        d = self._reports_dir
+        if not d.exists():
             return []
-        return sorted(REPORTS_DIR.glob("*.md"))
+        return sorted(d.glob("*.md"))
 
     # -- Status snapshot -----------------------------------------------------
 
@@ -257,7 +269,12 @@ class ProjectService:
             "tasks": task_list,
         }
 
-        status_path = DATA_DIR / "status.json"
+        if self._project_id is not None:
+            status_dir = DATA_DIR / str(self._project_id)
+            status_dir.mkdir(parents=True, exist_ok=True)
+            status_path = status_dir / "status.json"
+        else:
+            status_path = DATA_DIR / "status.json"
         with open(status_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, indent=2)
 

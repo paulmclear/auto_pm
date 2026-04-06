@@ -158,11 +158,15 @@ def _message_to_domain(row: MessageRow) -> Message:
 class SqliteTaskRepository:
     """Task persistence backed by SQLite via SQLAlchemy."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, project_id: Optional[int] = None) -> None:
         self._session = session
+        self._project_id = project_id
 
     def read(self) -> list[Task]:
-        rows = self._session.query(TaskRow).order_by(TaskRow.task_id).all()
+        q = self._session.query(TaskRow)
+        if self._project_id is not None:
+            q = q.filter(TaskRow.project_id == self._project_id)
+        rows = q.order_by(TaskRow.task_id).all()
         return [_task_to_domain(r) for r in rows]
 
     def update_status(self, task_id: int, status: TaskStatus) -> None:
@@ -196,14 +200,21 @@ class SqliteTaskRepository:
 class SqliteProjectRepository:
     """Project-plan persistence backed by SQLite via SQLAlchemy."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, project_id: Optional[int] = None) -> None:
         self._session = session
+        self._project_id = project_id
 
-    def read(self) -> Project:
-        row = self._session.query(ProjectRow).first()
+    def _get_project_row(self) -> ProjectRow:
+        q = self._session.query(ProjectRow)
+        if self._project_id is not None:
+            q = q.filter(ProjectRow.id == self._project_id)
+        row = q.first()
         if row is None:
             raise ValueError("No project found in database")
-        return _project_to_domain(row)
+        return row
+
+    def read(self) -> Project:
+        return _project_to_domain(self._get_project_row())
 
     def update_health(
         self,
@@ -211,9 +222,7 @@ class SqliteProjectRepository:
         rag_reason: Optional[str],
         forecast_end: Optional[dt.date],
     ) -> None:
-        row = self._session.query(ProjectRow).first()
-        if row is None:
-            raise ValueError("No project found in database")
+        row = self._get_project_row()
         if rag_status is not None:
             row.rag_status = rag_status
         if rag_reason is not None:
@@ -249,16 +258,21 @@ class SqliteProjectRepository:
 class SqliteRaidRepository:
     """RAID-log persistence backed by SQLite via SQLAlchemy."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, project_id: Optional[int] = None) -> None:
         self._session = session
+        self._project_id = project_id
 
     def read(self) -> list[RaidItem]:
-        rows = self._session.query(RaidItemRow).order_by(RaidItemRow.raid_id).all()
+        q = self._session.query(RaidItemRow)
+        if self._project_id is not None:
+            q = q.filter(RaidItemRow.project_id == self._project_id)
+        rows = q.order_by(RaidItemRow.raid_id).all()
         return [_raid_to_domain(r) for r in rows]
 
     def add(self, item: RaidItem) -> int:
         row = RaidItemRow(
             raid_id=item.raid_id,
+            project_id=self._project_id,
             type=item.type,
             title=item.title,
             description=item.description,
@@ -305,16 +319,21 @@ class SqliteRaidRepository:
 class SqliteActionRepository:
     """Action-item persistence backed by SQLite via SQLAlchemy."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, project_id: Optional[int] = None) -> None:
         self._session = session
+        self._project_id = project_id
 
     def read(self) -> list[Action]:
-        rows = self._session.query(ActionRow).order_by(ActionRow.action_id).all()
+        q = self._session.query(ActionRow)
+        if self._project_id is not None:
+            q = q.filter(ActionRow.project_id == self._project_id)
+        rows = q.order_by(ActionRow.action_id).all()
         return [_action_to_domain(r) for r in rows]
 
     def add(self, action: Action) -> int:
         row = ActionRow(
             action_id=action.action_id,
+            project_id=self._project_id,
             description=action.description,
             owner_name=action.owner_name,
             owner_email=action.owner_email,
@@ -343,8 +362,9 @@ class SqliteActionRepository:
 class SqliteMessageRepository:
     """Inbox/outbox message persistence backed by SQLite via SQLAlchemy."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, project_id: Optional[int] = None) -> None:
         self._session = session
+        self._project_id = project_id
 
     def send(
         self,
@@ -357,6 +377,7 @@ class SqliteMessageRepository:
 
         row = MessageRow(
             message_id=str(uuid.uuid4()),
+            project_id=self._project_id,
             direction="outbound",
             timestamp=dt.datetime.now().isoformat(),
             owner_name=owner_name,
@@ -370,21 +391,17 @@ class SqliteMessageRepository:
         self._session.commit()
 
     def read_inbox(self) -> list[Message]:
-        rows = (
-            self._session.query(MessageRow)
-            .filter(MessageRow.direction == "inbound")
-            .order_by(MessageRow.timestamp)
-            .all()
-        )
+        q = self._session.query(MessageRow).filter(MessageRow.direction == "inbound")
+        if self._project_id is not None:
+            q = q.filter(MessageRow.project_id == self._project_id)
+        rows = q.order_by(MessageRow.timestamp).all()
         return [_message_to_domain(r) for r in rows]
 
     def read_outbox(self) -> list[Message]:
-        rows = (
-            self._session.query(MessageRow)
-            .filter(MessageRow.direction == "outbound")
-            .order_by(MessageRow.timestamp)
-            .all()
-        )
+        q = self._session.query(MessageRow).filter(MessageRow.direction == "outbound")
+        if self._project_id is not None:
+            q = q.filter(MessageRow.project_id == self._project_id)
+        rows = q.order_by(MessageRow.timestamp).all()
         return [_message_to_domain(r) for r in rows]
 
 
@@ -396,8 +413,11 @@ class SqliteMessageRepository:
 class FileJournalRepository:
     """Journal persistence using markdown files on disk."""
 
-    def __init__(self, journal_dir: Path) -> None:
-        self._journal_dir = journal_dir
+    def __init__(self, journal_dir: Path, project_id: Optional[int] = None) -> None:
+        if project_id is not None:
+            self._journal_dir = journal_dir / str(project_id)
+        else:
+            self._journal_dir = journal_dir
         self._journal_dir.mkdir(parents=True, exist_ok=True)
 
     @property
