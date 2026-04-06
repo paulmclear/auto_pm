@@ -299,6 +299,13 @@ class ProjectService:
             return None
         return filepath.read_text(encoding="utf-8")
 
+    def get_report_json(self, date: str) -> str | None:
+        """Read structured JSON report for a date. Returns None if missing."""
+        filepath = self._reports_dir / f"{date}-status-report.json"
+        if not filepath.exists():
+            return None
+        return filepath.read_text(encoding="utf-8")
+
     # -- Status snapshot -----------------------------------------------------
 
     def write_status_snapshot(self) -> Path:
