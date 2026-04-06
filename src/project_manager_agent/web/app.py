@@ -78,9 +78,10 @@ def create_app() -> FastAPI:
         )
 
     # Project CRUD API (not project-scoped)
-    from project_manager_agent.web.routes import projects_api
+    from project_manager_agent.web.routes import messages_api, projects_api
 
     app.include_router(projects_api.router)
+    app.include_router(messages_api.router)
 
     # Project-scoped route modules
     from project_manager_agent.web.routes import (
