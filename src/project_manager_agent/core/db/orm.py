@@ -3,6 +3,7 @@
 import datetime as dt
 
 from sqlalchemy import (
+    Boolean,
     Date,
     ForeignKey,
     Integer,
@@ -46,6 +47,7 @@ class ProjectRow(Base):
     forecast_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
     rag_status: Mapped[str] = mapped_column(String, nullable=False)  # green|amber|red
     rag_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     phases: Mapped[list["PhaseRow"]] = relationship(back_populates="project")
     milestones: Mapped[list["MilestoneRow"]] = relationship(back_populates="project")

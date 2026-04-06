@@ -216,6 +216,55 @@ class SqliteProjectRepository:
     def read(self) -> Project:
         return _project_to_domain(self._get_project_row())
 
+    def create(
+        self,
+        name: str,
+        description: str,
+        objectives: list[str],
+        sponsor: str,
+        project_manager: str,
+        planned_start: dt.date,
+        planned_end: dt.date,
+    ) -> int:
+        """Create a new project and return its ID."""
+        row = ProjectRow(
+            name=name,
+            description=description,
+            objectives=json.dumps(objectives),
+            sponsor=sponsor,
+            project_manager=project_manager,
+            planned_start=planned_start,
+            planned_end=planned_end,
+            actual_start=planned_start,
+            forecast_end=planned_end,
+            rag_status="green",
+            rag_reason="New project",
+            is_archived=False,
+        )
+        self._session.add(row)
+        self._session.commit()
+        return row.id
+
+    def update(self, project_id: int, fields: dict) -> None:
+        """Update arbitrary fields on a project row."""
+        row = self._session.get(ProjectRow, project_id)
+        if row is None:
+            raise ValueError(f"Project {project_id} not found")
+        for key, value in fields.items():
+            if value is not None and hasattr(row, key):
+                if key == "objectives":
+                    value = json.dumps(value)
+                setattr(row, key, value)
+        self._session.commit()
+
+    def archive(self, project_id: int) -> None:
+        """Soft-delete a project by setting is_archived=True."""
+        row = self._session.get(ProjectRow, project_id)
+        if row is None:
+            raise ValueError(f"Project {project_id} not found")
+        row.is_archived = True
+        self._session.commit()
+
     def update_health(
         self,
         rag_status: Optional[RagStatus],

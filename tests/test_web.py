@@ -52,6 +52,14 @@ def client(tmp_path):
     with (
         patch("project_manager_agent.core.services.REPORTS_DIR", reports_dir),
         patch("project_manager_agent.web.app.create_tables"),
+        patch(
+            "project_manager_agent.core.services.SessionFactory",
+            Factory,
+        ),
+        patch(
+            "project_manager_agent.web.routes.projects_api.ProjectService",
+            lambda **kw: ProjectService(session=Factory(), **kw),
+        ),
     ):
         from project_manager_agent.web.app import create_app, get_service
 
@@ -201,4 +209,57 @@ class TestReports:
 
     def test_report_detail_404_for_missing(self, client: TestClient):
         resp = client.get(f"{PREFIX}/reports/1999-01-01")
+        assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Project CRUD API
+# ---------------------------------------------------------------------------
+
+
+class TestProjectCRUD:
+    def test_create_project(self, client: TestClient):
+        resp = client.post(
+            "/api/projects",
+            json={
+                "name": "Test Project",
+                "description": "A test project",
+                "objectives": ["Obj 1"],
+                "sponsor": "Test Sponsor",
+                "project_manager": "Test PM",
+                "planned_start": "2026-06-01",
+                "planned_end": "2026-12-31",
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "id" in data
+        assert isinstance(data["id"], int)
+
+    def test_update_project(self, client: TestClient):
+        resp = client.put(
+            "/api/projects/1",
+            json={"name": "Renamed Project"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_update_project_no_fields(self, client: TestClient):
+        resp = client.put("/api/projects/1", json={})
+        assert resp.status_code == 400
+
+    def test_update_project_not_found(self, client: TestClient):
+        resp = client.put(
+            "/api/projects/9999",
+            json={"name": "Nope"},
+        )
+        assert resp.status_code == 404
+
+    def test_archive_project(self, client: TestClient):
+        resp = client.delete("/api/projects/1")
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_archive_project_not_found(self, client: TestClient):
+        resp = client.delete("/api/projects/9999")
         assert resp.status_code == 404

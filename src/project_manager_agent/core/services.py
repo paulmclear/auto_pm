@@ -88,6 +88,35 @@ class ProjectService:
     def read_project(self) -> Project:
         return self.project.read()
 
+    def create_project(
+        self,
+        name: str,
+        description: str,
+        objectives: list[str],
+        sponsor: str,
+        project_manager: str,
+        planned_start: dt.date,
+        planned_end: dt.date,
+    ) -> int:
+        """Create a new project and return its ID."""
+        return self.project.create(
+            name=name,
+            description=description,
+            objectives=objectives,
+            sponsor=sponsor,
+            project_manager=project_manager,
+            planned_start=planned_start,
+            planned_end=planned_end,
+        )
+
+    def update_project(self, project_id: int, fields: dict) -> None:
+        """Update fields on a project."""
+        self.project.update(project_id, fields)
+
+    def archive_project(self, project_id: int) -> None:
+        """Soft-delete (archive) a project."""
+        self.project.archive(project_id)
+
     def update_health(
         self,
         rag_status: Optional[RagStatus] = None,
@@ -162,15 +191,14 @@ class ProjectService:
 
     # -- Projects (cross-project queries) ------------------------------------
 
-    def list_all_projects(self) -> list[dict]:
+    def list_all_projects(self, include_archived: bool = False) -> list[dict]:
         """Return all projects as [{"id": ..., "name": ...}, ...]."""
         from project_manager_agent.core.db.orm import ProjectRow
 
-        rows = (
-            self._session.query(ProjectRow.id, ProjectRow.name)
-            .order_by(ProjectRow.name)
-            .all()
-        )
+        q = self._session.query(ProjectRow.id, ProjectRow.name)
+        if not include_archived:
+            q = q.filter(ProjectRow.is_archived == False)  # noqa: E712
+        rows = q.order_by(ProjectRow.name).all()
         return [{"id": r.id, "name": r.name} for r in rows]
 
     def list_project_summaries(self) -> list[dict]:
@@ -185,7 +213,12 @@ class ProjectService:
             TaskRow,
         )
 
-        projects = self._session.query(ProjectRow).order_by(ProjectRow.name).all()
+        projects = (
+            self._session.query(ProjectRow)
+            .filter(ProjectRow.is_archived == False)  # noqa: E712
+            .order_by(ProjectRow.name)
+            .all()
+        )
         summaries = []
         for p in projects:
             # Task completion %
