@@ -94,6 +94,7 @@ def seeded_session(session: Session):
     session.add(
         TaskRow(
             task_id=1,
+            project_id=project.id,
             description="Task one",
             owner_name="Alice",
             owner_email="alice@test.com",
@@ -106,6 +107,7 @@ def seeded_session(session: Session):
     session.add(
         TaskRow(
             task_id=2,
+            project_id=project.id,
             description="Task two",
             owner_name="Bob",
             owner_email="bob@test.com",
@@ -120,6 +122,7 @@ def seeded_session(session: Session):
     session.add(
         RaidItemRow(
             raid_id=1,
+            project_id=project.id,
             type="risk",
             title="Risk one",
             description="A risk",
@@ -138,6 +141,7 @@ def seeded_session(session: Session):
     session.add(
         ActionRow(
             action_id=1,
+            project_id=project.id,
             description="Follow up on risk",
             owner_name="Alice",
             owner_email="alice@test.com",
@@ -151,6 +155,7 @@ def seeded_session(session: Session):
     session.add(
         MessageRow(
             message_id="msg-in-1",
+            project_id=project.id,
             direction="inbound",
             timestamp="2026-01-15T10:00:00",
             owner_name="Alice",
@@ -163,6 +168,7 @@ def seeded_session(session: Session):
     session.add(
         MessageRow(
             message_id="msg-out-1",
+            project_id=project.id,
             direction="outbound",
             timestamp="2026-01-15T11:00:00",
             owner_name="Alice",
@@ -439,9 +445,9 @@ class TestFileJournalRepository:
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(tmp_path / "journal")
+            repo = FileJournalRepository(tmp_path / "journal", project_id=1)
             repo.write("Morning Review", "All good")
-            journal_file = tmp_path / "journal" / "2026-03-20.md"
+            journal_file = tmp_path / "journal" / "1" / "2026-03-20.md"
             assert journal_file.exists()
             content = journal_file.read_text()
             assert "# Project Manager Journal — 2026-03-20" in content
@@ -453,23 +459,25 @@ class TestFileJournalRepository:
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(tmp_path / "journal")
+            repo = FileJournalRepository(tmp_path / "journal", project_id=1)
             repo.write("Section 1", "Content 1")
             repo.write("Section 2", "Content 2")
-            content = (tmp_path / "journal" / "2026-03-20.md").read_text()
+            content = (tmp_path / "journal" / "1" / "2026-03-20.md").read_text()
             assert "## Section 1" in content
             assert "## Section 2" in content
 
     def test_read_last_returns_previous_day(self, tmp_path: Path):
         journal_dir = tmp_path / "journal"
         journal_dir.mkdir()
+        project_journal = journal_dir / "1"
+        project_journal.mkdir()
         # Write a "previous" journal
-        (journal_dir / "2026-03-19.md").write_text("Yesterday's journal")
+        (project_journal / "2026-03-19.md").write_text("Yesterday's journal")
         ref_date = dt.date(2026, 3, 20)
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(journal_dir)
+            repo = FileJournalRepository(journal_dir, project_id=1)
             result = repo.read_last()
             assert result == "Yesterday's journal"
 
@@ -478,29 +486,33 @@ class TestFileJournalRepository:
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(tmp_path / "journal")
+            repo = FileJournalRepository(tmp_path / "journal", project_id=1)
             assert repo.read_last() is None
 
     def test_read_last_ignores_current_day(self, tmp_path: Path):
         journal_dir = tmp_path / "journal"
         journal_dir.mkdir()
+        project_journal = journal_dir / "1"
+        project_journal.mkdir()
         # Only today's journal exists
-        (journal_dir / "2026-03-20.md").write_text("Today's journal")
+        (project_journal / "2026-03-20.md").write_text("Today's journal")
         ref_date = dt.date(2026, 3, 20)
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(journal_dir)
+            repo = FileJournalRepository(journal_dir, project_id=1)
             assert repo.read_last() is None
 
     def test_read_last_picks_most_recent(self, tmp_path: Path):
         journal_dir = tmp_path / "journal"
         journal_dir.mkdir()
-        (journal_dir / "2026-03-18.md").write_text("Two days ago")
-        (journal_dir / "2026-03-19.md").write_text("Yesterday")
+        project_journal = journal_dir / "1"
+        project_journal.mkdir()
+        (project_journal / "2026-03-18.md").write_text("Two days ago")
+        (project_journal / "2026-03-19.md").write_text("Yesterday")
         ref_date = dt.date(2026, 3, 20)
         with patch(
             "project_manager_agent.core.db.repositories.REFERENCE_DATE", ref_date
         ):
-            repo = FileJournalRepository(journal_dir)
+            repo = FileJournalRepository(journal_dir, project_id=1)
             assert repo.read_last() == "Yesterday"

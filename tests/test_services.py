@@ -85,6 +85,7 @@ def seeded_session(session: Session):
     session.add(
         TaskRow(
             task_id=1,
+            project_id=project.id,
             description="Task one",
             owner_name="Alice",
             owner_email="alice@test.com",
@@ -97,6 +98,7 @@ def seeded_session(session: Session):
     session.add(
         TaskRow(
             task_id=2,
+            project_id=project.id,
             description="Task two",
             owner_name="Bob",
             owner_email="bob@test.com",
@@ -110,6 +112,7 @@ def seeded_session(session: Session):
     session.add(
         RaidItemRow(
             raid_id=1,
+            project_id=project.id,
             type="risk",
             title="Risk one",
             description="A risk",
@@ -127,6 +130,7 @@ def seeded_session(session: Session):
     session.add(
         ActionRow(
             action_id=1,
+            project_id=project.id,
             description="Follow up on risk",
             owner_name="Alice",
             owner_email="alice@test.com",
@@ -139,6 +143,7 @@ def seeded_session(session: Session):
     session.add(
         MessageRow(
             message_id="msg-in-1",
+            project_id=project.id,
             direction="inbound",
             timestamp="2026-01-15T10:00:00",
             owner_name="Alice",
@@ -151,6 +156,7 @@ def seeded_session(session: Session):
     session.add(
         MessageRow(
             message_id="msg-out-1",
+            project_id=project.id,
             direction="outbound",
             timestamp="2026-01-15T11:00:00",
             owner_name="Alice",
@@ -169,7 +175,7 @@ def seeded_session(session: Session):
 def svc(seeded_session: Session, tmp_path: Path):
     """Create a ProjectService backed by the seeded session with a temp journal dir."""
     with patch("project_manager_agent.core.services.JOURNAL_DIR", tmp_path / "journal"):
-        service = ProjectService(session=seeded_session)
+        service = ProjectService(session=seeded_session, project_id=1)
         yield service
         service.close()
 
@@ -335,7 +341,7 @@ class TestProjectServiceJournal:
         ):
             svc.write_journal("Morning", "All good")
             # Write a previous day journal so read_last finds it
-            journal_dir = tmp_path / "journal"
+            journal_dir = tmp_path / "journal" / "1"
             (journal_dir / "2026-03-19.md").write_text("Yesterday")
             result = svc.read_last_journal()
             assert result == "Yesterday"
@@ -357,8 +363,10 @@ class TestProjectServiceReports:
     def test_list_reports(self, svc: ProjectService, tmp_path: Path):
         reports_dir = tmp_path / "reports"
         reports_dir.mkdir()
-        (reports_dir / "2026-03-18-status-report.md").write_text("r1")
-        (reports_dir / "2026-03-19-status-report.md").write_text("r2")
+        project_reports = reports_dir / "1"
+        project_reports.mkdir()
+        (project_reports / "2026-03-18-status-report.md").write_text("r1")
+        (project_reports / "2026-03-19-status-report.md").write_text("r2")
         with patch(
             "project_manager_agent.core.services.REPORTS_DIR",
             reports_dir,
@@ -378,7 +386,7 @@ class TestProjectServiceLifecycle:
         with patch(
             "project_manager_agent.core.services.JOURNAL_DIR", tmp_path / "journal"
         ):
-            service = ProjectService(session=seeded_session)
+            service = ProjectService(session=seeded_session, project_id=1)
             service.close()
             # Session should still be usable since we don't own it
             tasks = service.read_tasks()
@@ -398,7 +406,7 @@ class TestProjectServiceLifecycle:
                 "project_manager_agent.core.services.JOURNAL_DIR", tmp_path / "journal"
             ),
         ):
-            service = ProjectService()
+            service = ProjectService(project_id=1)
             assert service._owns_session is True
             service.close()
             # Verify close was called (session is no longer usable for new transactions)

@@ -65,7 +65,11 @@ class ProjectService:
         self.raid = SqliteRaidRepository(self._session, project_id=project_id)
         self.actions = SqliteActionRepository(self._session, project_id=project_id)
         self.messages = SqliteMessageRepository(self._session, project_id=project_id)
-        self.journal = FileJournalRepository(JOURNAL_DIR, project_id=project_id)
+        self.journal = (
+            FileJournalRepository(JOURNAL_DIR, project_id=project_id)
+            if project_id is not None
+            else None
+        )
 
     # -- Tasks ---------------------------------------------------------------
 

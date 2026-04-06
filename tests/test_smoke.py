@@ -54,11 +54,13 @@ def demo_svc(demo_session, tmp_path):
     """ProjectService backed by demo data."""
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
+    project_journal = journal_dir / "1"
+    project_journal.mkdir()
     # Seed journal files in the temp dir
-    (journal_dir / "2026-03-18.md").write_text("# Journal — 2026-03-18\nDemo journal")
-    (journal_dir / "2026-03-19.md").write_text("# Journal — 2026-03-19\nDemo journal")
+    (project_journal / "2026-03-18.md").write_text("# Journal — 2026-03-18\nDemo journal")
+    (project_journal / "2026-03-19.md").write_text("# Journal — 2026-03-19\nDemo journal")
     with patch("project_manager_agent.core.services.JOURNAL_DIR", journal_dir):
-        svc = ProjectService(session=demo_session)
+        svc = ProjectService(session=demo_session, project_id=1)
         yield svc
         svc.close()
 
@@ -182,7 +184,9 @@ class TestReporterContextSmoke:
         Factory = sessionmaker(bind=demo_engine)
         journal_dir = tmp_path / "journal"
         journal_dir.mkdir()
-        (journal_dir / "2026-03-19.md").write_text("# Journal\nPrevious day")
+        project_journal = journal_dir / "1"
+        project_journal.mkdir()
+        (project_journal / "2026-03-19.md").write_text("# Journal\nPrevious day")
 
         ref_date = dt.date(2026, 3, 20)
         with (
@@ -200,7 +204,7 @@ class TestReporterContextSmoke:
                 format_context,
             )
 
-            ctx = load_all()
+            ctx = load_all(project_id=1)
 
             assert ctx["project"].name == "Customer Portal Modernisation"
             assert len(ctx["tasks"]) == 11

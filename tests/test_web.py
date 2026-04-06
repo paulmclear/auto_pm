@@ -36,10 +36,12 @@ def client(tmp_path):
 
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
-    (journal_dir / "2026-03-18.md").write_text(
+    project_journal = journal_dir / "1"
+    project_journal.mkdir()
+    (project_journal / "2026-03-18.md").write_text(
         "# Journal — 2026-03-18\nDemo journal day 1"
     )
-    (journal_dir / "2026-03-19.md").write_text(
+    (project_journal / "2026-03-19.md").write_text(
         "# Journal — 2026-03-19\nDemo journal day 2"
     )
 
@@ -58,7 +60,7 @@ def client(tmp_path):
         ),
         patch(
             "project_manager_agent.web.routes.projects_api.ProjectService",
-            lambda **kw: ProjectService(session=Factory(), **kw),
+            lambda **kw: ProjectService(session=Factory(), project_id=kw.pop("project_id", 1), **kw),
         ),
     ):
         from project_manager_agent.web.app import create_app, get_service
@@ -67,7 +69,7 @@ def client(tmp_path):
 
         async def _override_service(project_id: int):
             svc = ProjectService(session=Factory(), project_id=project_id)
-            svc.journal = type(svc.journal)(journal_dir, project_id=None)
+            svc.journal = type(svc.journal)(journal_dir, project_id=project_id)
             # Override _project_id to None so reports read from unscoped dir
             svc._project_id = None
             try:
