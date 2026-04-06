@@ -46,6 +46,17 @@
                 </button>
             </div>
             <form @submit.prevent="submitCompose()" class="px-6 py-4 space-y-4">
+                <!-- Template -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Template</label>
+                    <select @change="applyTemplate($event.target.value)"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <option value="">Custom (no template)</option>
+                        <template x-for="t in templates" :key="t.name">
+                            <option :value="t.name" x-text="t.name"></option>
+                        </template>
+                    </select>
+                </div>
                 <!-- From -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">From <span class="text-red-500">*</span></label>
@@ -189,6 +200,13 @@ function messagesApp() {
         compose: { stakeholderIdx: '', subject: '', body: '', taskId: '', date: defaultDate },
         composeSending: false,
         composeError: '',
+        templates: [
+            { name: 'Status Update', subject: 'Status Update — [Topic]', body: 'Hi,\n\nPlease find below a status update on [topic].\n\nProgress:\n- [Key achievement or milestone]\n- [Current status]\n\nNext Steps:\n- [Upcoming action items]\n\nPlease let me know if you have any questions.\n\nRegards' },
+            { name: 'Blocker Report', subject: 'Blocker Report — [Issue]', body: 'Hi,\n\nI am raising a blocker that requires attention.\n\nBlocker: [Describe the blocker]\nImpact: [What is affected and how]\nBlocked Since: [Date]\n\nSuggested Resolution:\n- [Proposed action or request]\n\nPlease advise on next steps.\n\nRegards' },
+            { name: 'Risk Escalation', subject: 'Risk Escalation — [Risk Title]', body: 'Hi,\n\nI would like to escalate the following risk for review.\n\nRisk: [Describe the risk]\nLikelihood: [High / Medium / Low]\nImpact: [High / Medium / Low]\nAffected Area: [What is at risk]\n\nMitigation Options:\n- [Option 1]\n- [Option 2]\n\nPlease review and advise.\n\nRegards' },
+            { name: 'Completion Notice', subject: 'Completion Notice — [Task/Milestone]', body: 'Hi,\n\nI am pleased to confirm the completion of [task or milestone].\n\nSummary:\n- [What was delivered]\n- [Key outcomes]\n\nAny follow-up actions or feedback are welcome.\n\nRegards' },
+            { name: 'Question', subject: 'Question — [Topic]', body: 'Hi,\n\nI have a question regarding [topic].\n\n[Your question here]\n\nContext: [Any relevant background information]\n\nI would appreciate a response by [date if applicable].\n\nRegards' },
+        ],
 
         async init() {
             await this.loadMessages();
@@ -253,6 +271,17 @@ function messagesApp() {
                 this.stakeholders = await resp.json();
             }
             this.showCompose = true;
+        },
+
+        applyTemplate(name) {
+            const t = this.templates.find(t => t.name === name);
+            if (t) {
+                this.compose.subject = t.subject;
+                this.compose.body = t.body;
+            } else {
+                this.compose.subject = '';
+                this.compose.body = '';
+            }
         },
 
         async submitCompose() {
