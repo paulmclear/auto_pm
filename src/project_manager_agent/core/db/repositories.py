@@ -464,10 +464,11 @@ class FileJournalRepository:
     """Journal persistence using markdown files on disk."""
 
     def __init__(self, journal_dir: Path, project_id: Optional[int] = None) -> None:
-        if project_id is not None:
-            self._journal_dir = journal_dir / str(project_id)
-        else:
-            self._journal_dir = journal_dir
+        if project_id is None:
+            raise ValueError(
+                "project_id is required — journal entries must be scoped to a project"
+            )
+        self._journal_dir = journal_dir / str(project_id)
         self._journal_dir.mkdir(parents=True, exist_ok=True)
 
     @property

@@ -15,8 +15,13 @@ Usage::
 
 import datetime as dt
 
+from dotenv import load_dotenv
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env into os.environ so third-party libs (OpenAI, LangSmith, etc.)
+# that read env vars directly can find their keys.
+load_dotenv()
 
 
 class Settings(BaseSettings):
