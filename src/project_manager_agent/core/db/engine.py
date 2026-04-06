@@ -2,18 +2,14 @@
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from project_manager_agent.core.config import settings
 from project_manager_agent.core.db.orm import Base
 
-DATABASE_URL = (
-    f"sqlite:///{Path(__file__).resolve().parents[4] / 'data' / 'project_manager.db'}"
-)
-
-_engine = create_engine(DATABASE_URL)
+_engine = create_engine(settings.database_uri)
 SessionFactory = sessionmaker(bind=_engine)
 
 

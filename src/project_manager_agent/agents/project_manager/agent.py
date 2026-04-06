@@ -27,20 +27,18 @@ import argparse
 from pathlib import Path
 from typing import Annotated, Optional, TypedDict
 
-from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from project_manager_agent.core.config import settings
 from project_manager_agent.core.date_utils import REFERENCE_DATE, advance_reference_date
 from project_manager_agent.core.db.engine import create_tables
 from project_manager_agent.core.services import ProjectService
 from .tools import tools, set_project_id
 from .prompt import build_system_prompt
-
-load_dotenv(override=True)
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +54,7 @@ class State(TypedDict):
 # LLM
 # ---------------------------------------------------------------------------
 
-project_manager_llm = ChatOpenAI(model="gpt-4o-mini")
+project_manager_llm = ChatOpenAI(model=settings.llm_model)
 project_manager_llm_with_tools = project_manager_llm.bind_tools(tools)
 
 

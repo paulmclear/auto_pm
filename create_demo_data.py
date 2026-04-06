@@ -13,14 +13,15 @@ Run from the project root:
     python create_demo_data.py
 """
 
-import json
+import re
 from pathlib import Path
 
 from project_manager_agent.core.db.engine import create_tables, get_session
 from project_manager_agent.core.db.seed import seed_all_demo_data
 
 DATA = Path("data")
-DATE = {"reference_date": "2026-03-20"}
+ENV_FILE = Path(".env")
+DEMO_DATE = "2026-03-20"
 
 
 def create() -> None:
@@ -34,9 +35,16 @@ def create() -> None:
     with get_session() as session:
         project_ids = seed_all_demo_data(session)
 
-    # Set reference date
-    with open(DATA / "date.json", "w", encoding="utf-8") as f:
-        json.dump(DATE, f)
+    # Set reference date in .env
+    env_text = ENV_FILE.read_text(encoding="utf-8") if ENV_FILE.exists() else ""
+    new_line = f"REFERENCE_DATE={DEMO_DATE}"
+    if re.search(r"^REFERENCE_DATE=", env_text, re.MULTILINE):
+        env_text = re.sub(
+            r"^REFERENCE_DATE=.*$", new_line, env_text, flags=re.MULTILINE
+        )
+    else:
+        env_text = env_text.rstrip("\n") + f"\n{new_line}\n"
+    ENV_FILE.write_text(env_text, encoding="utf-8")
 
     print(f"Demo data created ({len(project_ids)} projects):")
     print()
@@ -49,7 +57,7 @@ def create() -> None:
     print("  3. Mobile Banking App Refresh")
     print("     RAG: RED   | Tasks: 9 | RAID: 5 | Actions: 3 | Inbox: 2")
     print()
-    print(f"  Date:     {DATE['reference_date']}")
+    print(f"  Date:     {DEMO_DATE}")
     print("  Database: data/project_manager.db")
 
 

@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from project_manager_agent.core.config import (
     ADVANCE_WARNING_DAYS,
     ESCALATION_THRESHOLD_DAYS,
+    settings,
 )
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.models import Action, RaidItem
@@ -260,7 +261,7 @@ def parse_inbox_messages() -> list[dict]:
     raw = [_serialize(m) for m in messages]
 
     # Call LLM to parse intents
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model=settings.llm_model, temperature=settings.llm_temperature)
     prompt = _INTENT_PARSE_PROMPT.format(messages_json=json.dumps(raw, indent=2))
     response = llm.invoke(prompt)
 

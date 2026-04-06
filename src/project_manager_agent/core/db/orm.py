@@ -36,16 +36,16 @@ class ProjectRow(Base):
     __tablename__ = "projects"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     objectives: Mapped[str] = mapped_column(Text, nullable=False)  # JSON list[str]
-    sponsor: Mapped[str] = mapped_column(String, nullable=False)
-    project_manager: Mapped[str] = mapped_column(String, nullable=False)
+    sponsor: Mapped[str] = mapped_column(String(255), nullable=False)
+    project_manager: Mapped[str] = mapped_column(String(255), nullable=False)
     planned_start: Mapped[dt.date] = mapped_column(Date, nullable=False)
     planned_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
     actual_start: Mapped[dt.date] = mapped_column(Date, nullable=False)
     forecast_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    rag_status: Mapped[str] = mapped_column(String, nullable=False)  # green|amber|red
+    rag_status: Mapped[str] = mapped_column(String(20), nullable=False)  # green|amber|red
     rag_reason: Mapped[str] = mapped_column(Text, nullable=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -63,7 +63,7 @@ class PhaseRow(Base):
 
     phase_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     planned_start: Mapped[dt.date] = mapped_column(Date, nullable=False)
     planned_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
@@ -81,13 +81,13 @@ class MilestoneRow(Base):
 
     milestone_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     planned_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     forecast_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     actual_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
     status: Mapped[str] = mapped_column(
-        String, nullable=False
+        String(20), nullable=False
     )  # pending|achieved|missed
     linked_task_ids: Mapped[str] = mapped_column(
         Text, nullable=False, default="[]"
@@ -109,12 +109,12 @@ class TaskRow(Base):
         Integer, ForeignKey("projects.id"), index=True, nullable=True
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    owner_name: Mapped[str] = mapped_column(String, nullable=False)
-    owner_email: Mapped[str] = mapped_column(String, nullable=False)
+    owner_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
     due_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False, default="not_started")
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="not_started")
     priority: Mapped[str] = mapped_column(
-        String, nullable=False, default="medium"
+        String(20), nullable=False, default="medium"
     )  # high|medium|low
     phase_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     depends_on: Mapped[str] = mapped_column(
@@ -137,38 +137,38 @@ class RaidItemRow(Base):
         Integer, ForeignKey("projects.id"), index=True, nullable=True
     )
     type: Mapped[str] = mapped_column(
-        String, nullable=False
+        String(20), nullable=False
     )  # risk|assumption|issue|decision
-    title: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    owner: Mapped[str] = mapped_column(String, nullable=False)
+    owner: Mapped[str] = mapped_column(String(255), nullable=False)
     raised_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(
-        String, nullable=False
+        String(20), nullable=False
     )  # open|closed|accepted|superseded
     linked_task_ids: Mapped[str] = mapped_column(
         Text, nullable=False, default="[]"
     )  # JSON list[int]
 
     # Risk-specific
-    probability: Mapped[str | None] = mapped_column(String, nullable=True)
-    impact: Mapped[str | None] = mapped_column(String, nullable=True)
+    probability: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    impact: Mapped[str | None] = mapped_column(String(20), nullable=True)
     mitigation: Mapped[str | None] = mapped_column(Text, nullable=True)
     review_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
 
     # Assumption-specific
     validation_method: Mapped[str | None] = mapped_column(Text, nullable=True)
     validation_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
-    validated_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    validated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Issue-specific
-    severity: Mapped[str | None] = mapped_column(String, nullable=True)
+    severity: Mapped[str | None] = mapped_column(String(20), nullable=True)
     resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolved_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
 
     # Decision-specific
     rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
-    decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    decided_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     decision_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
     alternatives_considered: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -186,10 +186,10 @@ class ActionRow(Base):
         Integer, ForeignKey("projects.id"), index=True, nullable=True
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    owner_name: Mapped[str] = mapped_column(String, nullable=False)
-    owner_email: Mapped[str] = mapped_column(String, nullable=False)
+    owner_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
     due_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False, default="open")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     source_raid_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
@@ -202,15 +202,15 @@ class ActionRow(Base):
 class MessageRow(Base):
     __tablename__ = "messages"
 
-    message_id: Mapped[str] = mapped_column(String, primary_key=True)
+    message_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     project_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("projects.id"), index=True, nullable=True
     )
-    direction: Mapped[str] = mapped_column(String, nullable=False)  # inbound|outbound
-    timestamp: Mapped[str] = mapped_column(String, nullable=False)
-    owner_name: Mapped[str] = mapped_column(String, nullable=False)
-    owner_email: Mapped[str] = mapped_column(String, nullable=False)
+    direction: Mapped[str] = mapped_column(String(20), nullable=False)  # inbound|outbound
+    timestamp: Mapped[str] = mapped_column(String(50), nullable=False)
+    owner_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    sender_name: Mapped[str] = mapped_column(String, nullable=False)
-    sender_email: Mapped[str] = mapped_column(String, nullable=False)
+    sender_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    sender_email: Mapped[str] = mapped_column(String(255), nullable=False)
     task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)

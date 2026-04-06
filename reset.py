@@ -5,10 +5,10 @@ Clears all runtime data to allow a clean test run:
   - Drops and recreates all SQL tables in the SQLite database
   - Deletes all journal files in data/journal/ (including project subdirectories)
   - Optionally deletes all reports in data/reports/ (--reports flag)
-  - Resets data/date.json to START_DATE
+  - Resets REFERENCE_DATE in .env to START_DATE
 """
 
-import json
+import re
 import shutil
 import argparse
 from pathlib import Path
@@ -17,9 +17,22 @@ DATA = Path("data")
 
 JOURNAL_DIR = DATA / "journal"
 REPORTS_DIR = DATA / "reports"
-DATE_FILE = DATA / "date.json"
+ENV_FILE = Path(".env")
 
 START_DATE = "2026-03-19"
+
+
+def _set_env_reference_date(date: str) -> None:
+    """Update REFERENCE_DATE in .env."""
+    env_text = ENV_FILE.read_text(encoding="utf-8") if ENV_FILE.exists() else ""
+    new_line = f"REFERENCE_DATE={date}"
+    if re.search(r"^REFERENCE_DATE=", env_text, re.MULTILINE):
+        env_text = re.sub(
+            r"^REFERENCE_DATE=.*$", new_line, env_text, flags=re.MULTILINE
+        )
+    else:
+        env_text = env_text.rstrip("\n") + f"\n{new_line}\n"
+    ENV_FILE.write_text(env_text, encoding="utf-8")
 
 
 def reset(start_date: str = START_DATE, clear_reports: bool = False) -> None:
@@ -53,10 +66,9 @@ def reset(start_date: str = START_DATE, clear_reports: bool = False) -> None:
                 item.unlink()
                 cleared.append(str(item))
 
-    # Reset reference date
-    with open(DATE_FILE, "w", encoding="utf-8") as f:
-        json.dump({"reference_date": start_date}, f)
-    cleared.append(f"{DATE_FILE} → {start_date}")
+    # Reset reference date in .env
+    _set_env_reference_date(start_date)
+    cleared.append(f"REFERENCE_DATE → {start_date}")
 
     print("Cleared:")
     for item in cleared:

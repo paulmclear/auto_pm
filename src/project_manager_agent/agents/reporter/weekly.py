@@ -15,16 +15,14 @@ import datetime as dt
 from pathlib import Path
 from typing import Optional
 
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
+from project_manager_agent.core.config import settings
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.services import ProjectService
 
-load_dotenv(override=True)
-
-REPORTS_DIR = Path("data/reports")
+REPORTS_DIR = Path(settings.reports_dir)
 
 WEEKLY_SYSTEM_PROMPT = """\
 You are a senior project manager producing a concise, professional weekly
@@ -183,7 +181,7 @@ def generate_weekly_report(context_str: str) -> str:
         "{DATE}", str(REFERENCE_DATE)
     )
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model=settings.llm_model, temperature=settings.llm_temperature)
     response = llm.invoke(
         [
             SystemMessage(prompt),

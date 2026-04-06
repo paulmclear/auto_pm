@@ -9,6 +9,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from project_manager_agent.core.config import settings
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.models import (
     Action,
@@ -433,7 +434,7 @@ class SqliteMessageRepository:
             owner_email=owner_email,
             message=message,
             sender_name="Project Manager Agent",
-            sender_email="agent@project-manager.local",
+            sender_email=settings.agent_sender_email,
             task_id=task_id,
         )
         self._session.add(row)

@@ -28,17 +28,15 @@ import argparse
 from pathlib import Path
 from typing import Optional
 
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
+from project_manager_agent.core.config import settings
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from .context import load_all, format_context
 from .prompt import REPORT_SYSTEM_PROMPT
 
-load_dotenv(override=True)
-
-REPORTS_DIR = Path("data/reports")
+REPORTS_DIR = Path(settings.reports_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +46,7 @@ REPORTS_DIR = Path("data/reports")
 
 def generate_report(context_str: str) -> str:
     """Call the LLM to generate the full report from the formatted context."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model=settings.llm_model, temperature=settings.llm_temperature)
     response = llm.invoke(
         [
             SystemMessage(REPORT_SYSTEM_PROMPT.replace("{DATE}", str(REFERENCE_DATE))),
