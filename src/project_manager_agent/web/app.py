@@ -87,6 +87,7 @@ def create_app() -> FastAPI:
     from project_manager_agent.web.routes import (
         dashboard,
         journal,
+        messages,
         raid,
         reports,
         tasks,
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
     app.include_router(raid.router, prefix="/projects/{project_id}")
     app.include_router(journal.router, prefix="/projects/{project_id}")
     app.include_router(reports.router, prefix="/projects/{project_id}")
+    app.include_router(messages.router, prefix="/projects/{project_id}")
 
     # Middleware: persist selected project in cookie
     @app.middleware("http")
