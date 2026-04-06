@@ -5,21 +5,98 @@
     <!-- Header with tabs -->
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold text-gray-900">Messages</h1>
-        <div class="flex rounded-lg border border-gray-300 overflow-hidden">
-            <button @click="switchTab('inbound')"
-                    :class="tab === 'inbound' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-                    class="px-4 py-2 text-sm font-medium transition-colors">
-                Inbox
-                <span x-show="unreadInbox > 0" x-text="unreadInbox"
-                      class="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5"></span>
+        <div class="flex items-center gap-3">
+            <button @click="openCompose()"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Compose
             </button>
-            <button @click="switchTab('outbound')"
-                    :class="tab === 'outbound' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-                    class="px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors">
-                Outbox
-                <span x-show="unreadOutbox > 0" x-text="unreadOutbox"
-                      class="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5"></span>
-            </button>
+            <div class="flex rounded-lg border border-gray-300 overflow-hidden">
+                <button @click="switchTab('inbound')"
+                        :class="tab === 'inbound' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-4 py-2 text-sm font-medium transition-colors">
+                    Inbox
+                    <span x-show="unreadInbox > 0" x-text="unreadInbox"
+                          class="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5"></span>
+                </button>
+                <button @click="switchTab('outbound')"
+                        :class="tab === 'outbound' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-4 py-2 text-sm font-medium border-l border-gray-300 transition-colors">
+                    Outbox
+                    <span x-show="unreadOutbox > 0" x-text="unreadOutbox"
+                          class="ml-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compose modal -->
+    <div x-show="showCompose" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+         @keydown.escape.window="showCompose = false">
+        <div @click.outside="showCompose = false"
+             class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">New Message</h2>
+                <button @click="showCompose = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form @submit.prevent="submitCompose()" class="px-6 py-4 space-y-4">
+                <!-- From -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">From <span class="text-red-500">*</span></label>
+                    <select x-model="compose.stakeholderIdx"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                            required>
+                        <option value="" disabled>Select a stakeholder...</option>
+                        <template x-for="(s, idx) in stakeholders" :key="idx">
+                            <option :value="idx" x-text="s.name + ' (' + s.email + ')'"></option>
+                        </template>
+                    </select>
+                </div>
+                <!-- Subject -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <input x-model="compose.subject" type="text" placeholder="Optional subject line"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <!-- Body -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Body <span class="text-red-500">*</span></label>
+                    <textarea x-model="compose.body" rows="5" placeholder="Message body..."
+                              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                              required></textarea>
+                </div>
+                <!-- Related Task -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Related Task</label>
+                    <input x-model="compose.taskId" type="number" min="1" placeholder="Task ID (optional)"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <!-- Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input x-model="compose.date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" @click="showCompose = false"
+                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" :disabled="composeSending"
+                            class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                        <span x-show="!composeSending">Send</span>
+                        <span x-show="composeSending">Sending...</span>
+                    </button>
+                </div>
+                <p x-show="composeError" x-text="composeError" class="text-sm text-red-600"></p>
+            </form>
         </div>
     </div>
 
@@ -96,6 +173,7 @@
 <script>
 function messagesApp() {
     const projectId = {{ project_id }};
+    const defaultDate = '{{ reference_date }}';
     return {
         tab: 'inbound',
         messages: [],
@@ -106,6 +184,11 @@ function messagesApp() {
         unreadInbox: 0,
         unreadOutbox: 0,
         mobileView: 'list',
+        showCompose: false,
+        stakeholders: [],
+        compose: { stakeholderIdx: '', subject: '', body: '', taskId: '', date: defaultDate },
+        composeSending: false,
+        composeError: '',
 
         async loadMessages() {
             this.loading = true;
@@ -148,6 +231,49 @@ function messagesApp() {
             }
             const resp = await fetch(`/api/messages/${msg.id}?project_id=${projectId}`);
             this.selectedDetail = await resp.json();
+        },
+
+        async openCompose() {
+            this.composeError = '';
+            this.compose = { stakeholderIdx: '', subject: '', body: '', taskId: '', date: defaultDate };
+            if (this.stakeholders.length === 0) {
+                const resp = await fetch(`/api/messages/stakeholders?project_id=${projectId}`);
+                this.stakeholders = await resp.json();
+            }
+            this.showCompose = true;
+        },
+
+        async submitCompose() {
+            const s = this.stakeholders[this.compose.stakeholderIdx];
+            if (!s) { this.composeError = 'Please select a sender.'; return; }
+            if (!this.compose.body.trim()) { this.composeError = 'Message body is required.'; return; }
+            this.composeSending = true;
+            this.composeError = '';
+            try {
+                const payload = {
+                    project_id: projectId,
+                    sender_name: s.name,
+                    sender_email: s.email,
+                    subject: this.compose.subject,
+                    body: this.compose.body,
+                    task_id: this.compose.taskId ? parseInt(this.compose.taskId) : null,
+                    date: this.compose.date || null,
+                };
+                const resp = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    this.composeError = err.detail || 'Failed to send message.';
+                    return;
+                }
+                this.showCompose = false;
+                this.switchTab('inbound');
+            } finally {
+                this.composeSending = false;
+            }
         },
 
         formatDate(d) {

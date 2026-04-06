@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from project_manager_agent.core.db.engine import get_session
-from project_manager_agent.core.db.orm import MessageRow
+from project_manager_agent.core.db.orm import MessageRow, TaskRow
 from project_manager_agent.core.services import ProjectService
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])
@@ -65,6 +67,20 @@ async def list_messages(
         svc.close()
 
 
+@router.get("/stakeholders")
+async def list_stakeholders(project_id: int):
+    """Return unique task owners for the compose form 'from' dropdown."""
+    with get_session() as session:
+        rows = (
+            session.query(TaskRow.owner_name, TaskRow.owner_email)
+            .filter(TaskRow.project_id == project_id)
+            .distinct()
+            .order_by(TaskRow.owner_name)
+            .all()
+        )
+        return [{"name": r.owner_name, "email": r.owner_email} for r in rows]
+
+
 @router.get("/{message_id}")
 async def get_message(message_id: str, project_id: int):
     """Return full message content."""
@@ -104,3 +120,43 @@ async def mark_message_read(message_id: str, project_id: int):
         row.is_read = True
         session.commit()
         return {"id": message_id, "read": True}
+
+
+class ComposeRequest(BaseModel):
+    project_id: int
+    sender_name: str
+    sender_email: str
+    subject: str = ""
+    body: str = Field(..., min_length=1)
+    task_id: Optional[int] = None
+    date: Optional[str] = None  # ISO date string
+
+
+@router.post("", status_code=201)
+async def compose_message(payload: ComposeRequest):
+    """Create a new inbound message (simulates stakeholder sending to PM)."""
+    from project_manager_agent.core.date_utils import REFERENCE_DATE
+
+    timestamp = payload.date or REFERENCE_DATE.isoformat()
+    # Prepend subject to body if provided, matching how existing messages work
+    message_text = payload.body
+    if payload.subject:
+        message_text = f"Subject: {payload.subject}\n\n{payload.body}"
+
+    with get_session() as session:
+        row = MessageRow(
+            message_id=str(uuid.uuid4()),
+            project_id=payload.project_id,
+            direction="inbound",
+            timestamp=timestamp,
+            owner_name="Project Manager Agent",
+            owner_email="pm-agent@system.local",
+            message=message_text,
+            sender_name=payload.sender_name,
+            sender_email=payload.sender_email,
+            task_id=payload.task_id,
+            is_read=False,
+        )
+        session.add(row)
+        session.commit()
+        return {"id": row.message_id, "status": "created"}
