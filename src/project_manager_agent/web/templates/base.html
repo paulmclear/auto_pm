@@ -29,7 +29,7 @@
                    x-transition:leave="transition ease-in-out duration-200 transform"
                    x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
                    class="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 px-6 py-4">
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center justify-between mb-4">
                     <span class="text-white font-semibold text-lg">Project Manager</span>
                     <button @click="open = false" class="text-gray-400 hover:text-white">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -37,6 +37,7 @@
                         </svg>
                     </button>
                 </div>
+                {% include "_project_switcher.html" %}
                 {% include "_nav.html" %}
             </aside>
         </div>
@@ -52,6 +53,7 @@
                     </div>
                     <span class="text-white font-semibold text-lg">Project Manager</span>
                 </div>
+                {% include "_project_switcher.html" %}
                 {% include "_nav.html" %}
             </div>
         </aside>

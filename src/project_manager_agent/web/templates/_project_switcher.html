@@ -1,0 +1,34 @@
+{% if projects and projects|length > 1 %}
+<div x-data="{ open: false }" class="relative mt-2">
+    <button @click="open = !open"
+            class="flex w-full items-center justify-between rounded-md bg-gray-800 px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 focus:outline-none">
+        <span class="truncate">
+            {% for p in projects %}{% if p.id == project_id %}{{ p.name }}{% endif %}{% endfor %}
+        </span>
+        <svg class="ml-2 h-4 w-4 shrink-0 text-gray-400" :class="open && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+    </button>
+    <ul x-show="open" @click.outside="open = false"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="absolute z-10 mt-1 w-full rounded-md bg-gray-800 py-1 shadow-lg ring-1 ring-black/20" x-cloak>
+        {% for p in projects %}
+        <li>
+            <a href="/projects/{{ p.id }}/"
+               class="block px-3 py-2 text-sm {{ 'text-white bg-gray-700' if p.id == project_id else 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                {{ p.name }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% elif projects and projects|length == 1 %}
+<div class="mt-2 px-3 py-2 text-sm font-medium text-gray-300 truncate">
+    {{ projects[0].name }}
+</div>
+{% endif %}

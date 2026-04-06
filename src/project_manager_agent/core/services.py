@@ -160,6 +160,35 @@ class ProjectService:
     def write_journal(self, section: str, content: str) -> None:
         self.journal.write(section, content)
 
+    # -- Projects (cross-project queries) ------------------------------------
+
+    def list_all_projects(self) -> list[dict]:
+        """Return all projects as [{"id": ..., "name": ...}, ...]."""
+        from project_manager_agent.core.db.orm import ProjectRow
+
+        rows = (
+            self._session.query(ProjectRow.id, ProjectRow.name)
+            .order_by(ProjectRow.name)
+            .all()
+        )
+        return [{"id": r.id, "name": r.name} for r in rows]
+
+    # -- Journal (web helpers) -----------------------------------------------
+
+    def list_journal_dates(self) -> list[str]:
+        """Return journal date stems (newest first)."""
+        d = self.journal._journal_dir
+        if not d.exists():
+            return []
+        return [f.stem for f in sorted(d.glob("*.md"), reverse=True)]
+
+    def get_journal_content(self, date: str) -> str | None:
+        """Read a single journal entry by date string. Returns None if missing."""
+        filepath = self.journal._journal_dir / f"{date}.md"
+        if not filepath.exists():
+            return None
+        return filepath.read_text(encoding="utf-8")
+
     # -- Reports -------------------------------------------------------------
 
     @property
@@ -174,6 +203,17 @@ class ProjectService:
         if not d.exists():
             return []
         return sorted(d.glob("*.md"))
+
+    def list_report_names(self) -> list[str]:
+        """Return report stems (newest first)."""
+        return [r.stem for r in reversed(self.list_reports())]
+
+    def get_report_content(self, name: str) -> str | None:
+        """Read a single report by stem. Returns None if missing."""
+        filepath = self._reports_dir / f"{name}.md"
+        if not filepath.exists():
+            return None
+        return filepath.read_text(encoding="utf-8")
 
     # -- Status snapshot -----------------------------------------------------
 

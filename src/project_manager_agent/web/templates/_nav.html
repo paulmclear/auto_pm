@@ -1,7 +1,7 @@
 <nav class="flex flex-1 flex-col mt-4">
     <ul role="list" class="flex flex-1 flex-col gap-y-1">
         <li>
-            <a href="/"
+            <a href="{{ url_prefix }}/"
                class="group flex gap-x-3 rounded-md px-3 py-2 text-sm font-semibold leading-6 {{ 'bg-gray-800 text-white' if active_page == 'dashboard' else 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -10,7 +10,7 @@
             </a>
         </li>
         <li>
-            <a href="/tasks"
+            <a href="{{ url_prefix }}/tasks"
                class="group flex gap-x-3 rounded-md px-3 py-2 text-sm font-semibold leading-6 {{ 'bg-gray-800 text-white' if active_page == 'tasks' else 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -19,7 +19,7 @@
             </a>
         </li>
         <li>
-            <a href="/raid"
+            <a href="{{ url_prefix }}/raid"
                class="group flex gap-x-3 rounded-md px-3 py-2 text-sm font-semibold leading-6 {{ 'bg-gray-800 text-white' if active_page == 'raid' else 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -28,7 +28,7 @@
             </a>
         </li>
         <li>
-            <a href="/journal"
+            <a href="{{ url_prefix }}/journal"
                class="group flex gap-x-3 rounded-md px-3 py-2 text-sm font-semibold leading-6 {{ 'bg-gray-800 text-white' if active_page == 'journal' else 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -37,7 +37,7 @@
             </a>
         </li>
         <li>
-            <a href="/reports"
+            <a href="{{ url_prefix }}/reports"
                class="group flex gap-x-3 rounded-md px-3 py-2 text-sm font-semibold leading-6 {{ 'bg-gray-800 text-white' if active_page == 'reports' else 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />

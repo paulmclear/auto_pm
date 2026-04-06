@@ -1,48 +1,42 @@
-"""Report routes — list reports and view individual entries."""
+"""Report routes -- list reports and view individual entries."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import markdown
 from fastapi import APIRouter, HTTPException, Request
 
-from project_manager_agent.web.app import ServiceDep, templates
+from project_manager_agent.web.app import ServiceDep, make_context, templates
 
 router = APIRouter()
 
-REPORTS_DIR = Path(__file__).resolve().parents[4] / "data" / "reports"
-
 
 @router.get("/reports")
-async def reports_list(request: Request, svc: ServiceDep):
+async def reports_list(request: Request, project_id: int, svc: ServiceDep):
     """List available reports (newest first)."""
-    files = (
-        sorted(REPORTS_DIR.glob("*.md"), reverse=True) if REPORTS_DIR.exists() else []
-    )
-    dates = [f.stem for f in files]
+    dates = svc.list_report_names()
     return templates.TemplateResponse(
         "reports_list.html",
-        {"request": request, "dates": dates, "active_page": "reports"},
+        make_context(request, svc, project_id, "reports", dates=dates),
     )
 
 
 @router.get("/reports/{date}")
-async def report_detail(request: Request, date: str, svc: ServiceDep):
+async def report_detail(request: Request, project_id: int, date: str, svc: ServiceDep):
     """Render a single report as HTML."""
-    filepath = REPORTS_DIR / f"{date}.md"
-    if not filepath.exists():
+    content_md = svc.get_report_content(date)
+    if content_md is None:
         raise HTTPException(status_code=404, detail=f"No report for {date}")
 
-    content_md = filepath.read_text(encoding="utf-8")
     content_html = markdown.markdown(content_md)
 
     return templates.TemplateResponse(
         "reports_detail.html",
-        {
-            "request": request,
-            "date": date,
-            "content_html": content_html,
-            "active_page": "reports",
-        },
+        make_context(
+            request,
+            svc,
+            project_id,
+            "reports",
+            date=date,
+            content_html=content_html,
+        ),
     )

@@ -50,17 +50,18 @@ def client(tmp_path):
     )
 
     with (
-        patch("project_manager_agent.web.routes.journal.JOURNAL_DIR", journal_dir),
-        patch("project_manager_agent.web.routes.reports.REPORTS_DIR", reports_dir),
+        patch("project_manager_agent.core.services.REPORTS_DIR", reports_dir),
         patch("project_manager_agent.web.app.create_tables"),
     ):
         from project_manager_agent.web.app import create_app, get_service
 
         app = create_app()
 
-        async def _override_service():
-            svc = ProjectService(session=Factory())
-            svc.journal = type(svc.journal)(journal_dir)
+        async def _override_service(project_id: int):
+            svc = ProjectService(session=Factory(), project_id=project_id)
+            svc.journal = type(svc.journal)(journal_dir, project_id=None)
+            # Override _project_id to None so reports read from unscoped dir
+            svc._project_id = None
             try:
                 yield svc
             finally:
@@ -71,6 +72,22 @@ def client(tmp_path):
         app.dependency_overrides.clear()
 
 
+# The demo seed creates project with id=1
+PREFIX = "/projects/1"
+
+
+# ---------------------------------------------------------------------------
+# Root redirect
+# ---------------------------------------------------------------------------
+
+
+class TestRootRedirect:
+    def test_root_redirects_to_project(self, client: TestClient):
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/projects/" in resp.headers["location"]
+
+
 # ---------------------------------------------------------------------------
 # Dashboard
 # ---------------------------------------------------------------------------
@@ -78,15 +95,15 @@ def client(tmp_path):
 
 class TestDashboard:
     def test_dashboard_returns_200(self, client: TestClient):
-        resp = client.get("/")
+        resp = client.get(f"{PREFIX}/")
         assert resp.status_code == 200
 
     def test_dashboard_contains_project_name(self, client: TestClient):
-        resp = client.get("/")
+        resp = client.get(f"{PREFIX}/")
         assert "Customer Portal Modernisation" in resp.text
 
     def test_dashboard_contains_rag_status(self, client: TestClient):
-        resp = client.get("/")
+        resp = client.get(f"{PREFIX}/")
         assert "amber" in resp.text.lower()
 
 
@@ -97,16 +114,16 @@ class TestDashboard:
 
 class TestTasks:
     def test_tasks_returns_200(self, client: TestClient):
-        resp = client.get("/tasks")
+        resp = client.get(f"{PREFIX}/tasks")
         assert resp.status_code == 200
 
     def test_tasks_contains_task_descriptions(self, client: TestClient):
-        resp = client.get("/tasks")
+        resp = client.get(f"{PREFIX}/tasks")
         html = resp.text
         assert "API" in html or "api" in html.lower()
 
     def test_tasks_contains_status_badges(self, client: TestClient):
-        resp = client.get("/tasks")
+        resp = client.get(f"{PREFIX}/tasks")
         html = resp.text
         assert "in_progress" in html or "complete" in html or "not_started" in html
 
@@ -118,16 +135,16 @@ class TestTasks:
 
 class TestRaid:
     def test_raid_returns_200(self, client: TestClient):
-        resp = client.get("/raid")
+        resp = client.get(f"{PREFIX}/raid")
         assert resp.status_code == 200
 
     def test_raid_contains_raid_entries(self, client: TestClient):
-        resp = client.get("/raid")
+        resp = client.get(f"{PREFIX}/raid")
         html = resp.text
         assert "risk" in html.lower() or "issue" in html.lower()
 
     def test_raid_contains_type_badges(self, client: TestClient):
-        resp = client.get("/raid")
+        resp = client.get(f"{PREFIX}/raid")
         html = resp.text
         assert "risk" in html.lower()
 
@@ -139,24 +156,24 @@ class TestRaid:
 
 class TestJournal:
     def test_journal_list_returns_200(self, client: TestClient):
-        resp = client.get("/journal")
+        resp = client.get(f"{PREFIX}/journal")
         assert resp.status_code == 200
 
     def test_journal_list_contains_dates(self, client: TestClient):
-        resp = client.get("/journal")
+        resp = client.get(f"{PREFIX}/journal")
         assert "2026-03-19" in resp.text
         assert "2026-03-18" in resp.text
 
     def test_journal_detail_returns_200(self, client: TestClient):
-        resp = client.get("/journal/2026-03-19")
+        resp = client.get(f"{PREFIX}/journal/2026-03-19")
         assert resp.status_code == 200
 
     def test_journal_detail_contains_content(self, client: TestClient):
-        resp = client.get("/journal/2026-03-19")
+        resp = client.get(f"{PREFIX}/journal/2026-03-19")
         assert "Demo journal day 2" in resp.text
 
     def test_journal_detail_404_for_missing(self, client: TestClient):
-        resp = client.get("/journal/1999-01-01")
+        resp = client.get(f"{PREFIX}/journal/1999-01-01")
         assert resp.status_code == 404
 
 
@@ -167,21 +184,21 @@ class TestJournal:
 
 class TestReports:
     def test_reports_list_returns_200(self, client: TestClient):
-        resp = client.get("/reports")
+        resp = client.get(f"{PREFIX}/reports")
         assert resp.status_code == 200
 
     def test_reports_list_contains_dates(self, client: TestClient):
-        resp = client.get("/reports")
+        resp = client.get(f"{PREFIX}/reports")
         assert "2026-03-18-status-report" in resp.text
 
     def test_report_detail_returns_200(self, client: TestClient):
-        resp = client.get("/reports/2026-03-18-status-report")
+        resp = client.get(f"{PREFIX}/reports/2026-03-18-status-report")
         assert resp.status_code == 200
 
     def test_report_detail_contains_content(self, client: TestClient):
-        resp = client.get("/reports/2026-03-18-status-report")
+        resp = client.get(f"{PREFIX}/reports/2026-03-18-status-report")
         assert "All good" in resp.text
 
     def test_report_detail_404_for_missing(self, client: TestClient):
-        resp = client.get("/reports/1999-01-01")
+        resp = client.get(f"{PREFIX}/reports/1999-01-01")
         assert resp.status_code == 404
