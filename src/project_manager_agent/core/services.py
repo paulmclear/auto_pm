@@ -306,6 +306,20 @@ class ProjectService:
             return None
         return filepath.read_text(encoding="utf-8")
 
+    def list_report_jsons(self) -> list[dict]:
+        """Return all structured report JSONs sorted by date (oldest first)."""
+        d = self._reports_dir
+        if not d.exists():
+            return []
+        results = []
+        for path in sorted(d.glob("*-status-report.json")):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                results.append(data)
+            except (json.JSONDecodeError, OSError):
+                continue
+        return results
+
     # -- Status snapshot -----------------------------------------------------
 
     def write_status_snapshot(self) -> Path:

@@ -5,6 +5,34 @@
     <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Reports</h1>
 </div>
 
+<!-- Trend Charts -->
+<div x-data="trendsApp()" x-init="load()" class="mb-8">
+    <template x-if="hasData">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4">
+                <h3 class="text-sm font-medium text-gray-500 mb-3">Tasks Complete (%)</h3>
+                <canvas id="chart-pct-complete" height="200"></canvas>
+            </div>
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4">
+                <h3 class="text-sm font-medium text-gray-500 mb-3">Open Risks</h3>
+                <canvas id="chart-open-risks" height="200"></canvas>
+            </div>
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4">
+                <h3 class="text-sm font-medium text-gray-500 mb-3">Overdue Tasks</h3>
+                <canvas id="chart-overdue" height="200"></canvas>
+            </div>
+        </div>
+    </template>
+    <template x-if="loaded && !hasData">
+        <div class="text-center rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 px-6 py-10 mb-2">
+            <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">Trend charts will appear after multiple reports are generated.</p>
+        </div>
+    </template>
+</div>
+
 {% if dates %}
 <ul role="list" class="divide-y divide-gray-100 rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5">
     {% for date in dates %}
@@ -34,4 +62,115 @@
     <p class="mt-1 text-sm text-gray-500">Reports will appear here after the reporter agent runs.</p>
 </div>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+function trendsApp() {
+    return {
+        hasData: false,
+        loaded: false,
+        charts: [],
+        async load() {
+            try {
+                const res = await fetch('/api/reports/trends?project_id={{ project_id }}');
+                const data = await res.json();
+                this.loaded = true;
+                if (!data.dates || data.dates.length < 2) return;
+                this.hasData = true;
+                this.$nextTick(() => this.renderCharts(data));
+            } catch (e) {
+                this.loaded = true;
+            }
+        },
+        renderCharts(data) {
+            const labels = data.dates;
+            const commonOpts = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        ticks: { font: { size: 11 }, maxRotation: 45 },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 11 }, precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            };
+
+            // % Tasks Complete
+            this.charts.push(new Chart(
+                document.getElementById('chart-pct-complete'),
+                {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: data.pct_complete,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#4f46e5'
+                        }]
+                    },
+                    options: {
+                        ...commonOpts,
+                        scales: {
+                            ...commonOpts.scales,
+                            y: { ...commonOpts.scales.y, max: 100, ticks: { ...commonOpts.scales.y.ticks, callback: v => v + '%' } }
+                        }
+                    }
+                }
+            ));
+
+            // Open Risks
+            this.charts.push(new Chart(
+                document.getElementById('chart-open-risks'),
+                {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: data.open_risks,
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#dc2626'
+                        }]
+                    },
+                    options: commonOpts
+                }
+            ));
+
+            // Overdue Tasks
+            this.charts.push(new Chart(
+                document.getElementById('chart-overdue'),
+                {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: data.overdue_count,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#f59e0b'
+                        }]
+                    },
+                    options: commonOpts
+                }
+            ));
+        }
+    };
+}
+</script>
 {% endblock %}
