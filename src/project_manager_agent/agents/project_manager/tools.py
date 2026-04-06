@@ -22,6 +22,23 @@ from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.models import Action, RaidItem
 from project_manager_agent.core.services import ProjectService
 
+# ---------------------------------------------------------------------------
+# Project scoping — set once at startup, read by every tool function
+# ---------------------------------------------------------------------------
+
+_PROJECT_ID: Optional[int] = None
+
+
+def set_project_id(project_id: Optional[int]) -> None:
+    """Set the project_id that all tool functions will use."""
+    global _PROJECT_ID
+    _PROJECT_ID = project_id
+
+
+def _service() -> ProjectService:
+    """Create a ProjectService scoped to the active project."""
+    return ProjectService(project_id=_PROJECT_ID)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -48,7 +65,7 @@ def _parse_date(s: Optional[str]) -> Optional[dt.date]:
 
 
 def fetch_tasks() -> list[dict]:
-    svc = ProjectService()
+    svc = _service()
     try:
         return [_serialize(t) for t in svc.read_tasks()]
     finally:
@@ -57,7 +74,7 @@ def fetch_tasks() -> list[dict]:
 
 def fetch_overdue_tasks() -> list[dict]:
     """Return tasks whose due_date is before REFERENCE_DATE and status is not complete."""
-    svc = ProjectService()
+    svc = _service()
     try:
         tasks = svc.read_tasks()
         overdue = [
@@ -82,7 +99,7 @@ def fetch_escalation_candidates(
     - ``last_escalation_date``: ISO date of the most recent escalation (if any)
     - ``sponsor``: the project sponsor name (escalation recipient)
     """
-    svc = ProjectService()
+    svc = _service()
     try:
         tasks = svc.read_tasks()
         project = svc.read_project()
@@ -120,7 +137,7 @@ def fetch_upcoming_due_tasks(lead_days: int = ADVANCE_WARNING_DAYS) -> list[dict
     Only includes tasks that are NOT already overdue (due_date >= REFERENCE_DATE)
     and NOT complete.  Each result includes a 'days_until_due' field.
     """
-    svc = ProjectService()
+    svc = _service()
     try:
         tasks = svc.read_tasks()
         horizon = REFERENCE_DATE + dt.timedelta(days=lead_days)
@@ -143,7 +160,7 @@ def fetch_dependency_blocked_tasks() -> list[dict]:
     Each returned dict includes the task fields plus a 'blocking_tasks' list
     showing which upstream task_ids are not yet complete.
     """
-    svc = ProjectService()
+    svc = _service()
     try:
         tasks = svc.read_tasks()
         status_by_id = {t.task_id: t.status for t in tasks}
@@ -166,7 +183,7 @@ def fetch_dependency_blocked_tasks() -> list[dict]:
 
 
 def read_last_journal() -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         content = svc.read_last_journal()
         return content if content is not None else "No previous journal found."
@@ -175,7 +192,7 @@ def read_last_journal() -> str:
 
 
 def read_outbox() -> list[dict]:
-    svc = ProjectService()
+    svc = _service()
     try:
         return [_serialize(m) for m in svc.read_outbox()]
     finally:
@@ -183,7 +200,7 @@ def read_outbox() -> list[dict]:
 
 
 def read_inbox() -> list[dict]:
-    svc = ProjectService()
+    svc = _service()
     try:
         return [_serialize(m) for m in svc.read_inbox()]
     finally:
@@ -231,7 +248,7 @@ def parse_inbox_messages() -> list[dict]:
     - ``extracted_details``: actionable summary
     - ``suggested_action``: recommended next step
     """
-    svc = ProjectService()
+    svc = _service()
     try:
         messages = svc.read_inbox()
     finally:
@@ -276,7 +293,7 @@ def parse_inbox_messages() -> list[dict]:
 def send_message(
     owner_name: str, owner_email: str, message: str, task_id: Optional[int] = None
 ) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.send_message(owner_name, owner_email, message, task_id=task_id)
         tag = f" [task {task_id}]" if task_id else ""
@@ -287,7 +304,7 @@ def send_message(
 
 
 def update_task_status(task_id: int, status: str) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_task_status(task_id, status)  # type: ignore[arg-type]
         print(f"Task {task_id} status updated to '{status}'")
@@ -301,7 +318,7 @@ def update_task_status(task_id: int, status: str) -> str:
 def update_task_blocking(
     task_id: int, blocked_reason: Optional[str], depends_on: Optional[list]
 ) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_task_blocking(task_id, blocked_reason, depends_on)
         return f"Task {task_id} blocking info updated."
@@ -312,7 +329,7 @@ def update_task_blocking(
 
 
 def write_journal_entry(section: str, content: str) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.write_journal(section, content)
         return f"Journal entry written: {section}"
@@ -321,7 +338,7 @@ def write_journal_entry(section: str, content: str) -> str:
 
 
 def fetch_project_plan() -> dict:
-    svc = ProjectService()
+    svc = _service()
     try:
         project = svc.read_project()
         return _serialize(project)
@@ -332,7 +349,7 @@ def fetch_project_plan() -> dict:
 def update_project_health(
     rag_status: Optional[str], rag_reason: Optional[str], forecast_end: Optional[str]
 ) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_health(
             rag_status=rag_status,  # type: ignore[arg-type]
@@ -355,7 +372,7 @@ def update_milestone(
     forecast_date: Optional[str],
     actual_date: Optional[str],
 ) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_milestone(
             milestone_id,
@@ -371,7 +388,7 @@ def update_milestone(
 
 
 def fetch_raid_items() -> list[dict]:
-    svc = ProjectService()
+    svc = _service()
     try:
         return [_serialize(r) for r in svc.read_raid()]
     finally:
@@ -420,7 +437,7 @@ def add_raid_item(
         decision_date=decision_date,
         alternatives_considered=alternatives_considered,
     )
-    svc = ProjectService()
+    svc = _service()
     try:
         raid_id = svc.add_raid(item)
         print(f"RAID item {raid_id} added: [{type}] {title}")
@@ -464,7 +481,7 @@ def update_raid_item(
         "decision_date": decision_date,
         "alternatives_considered": alternatives_considered,
     }
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_raid(raid_id, fields)
         print(f"RAID item {raid_id} updated.")
@@ -476,7 +493,7 @@ def update_raid_item(
 
 
 def fetch_actions() -> list[dict]:
-    svc = ProjectService()
+    svc = _service()
     try:
         return [_serialize(a) for a in svc.read_actions()]
     finally:
@@ -501,7 +518,7 @@ def add_action(
         source_raid_id=source_raid_id,
         source_task_id=source_task_id,
     )
-    svc = ProjectService()
+    svc = _service()
     try:
         action_id = svc.add_action(action)
         print(f"Action {action_id} added: {description}")
@@ -511,7 +528,7 @@ def add_action(
 
 
 def update_action_status(action_id: int, status: str) -> str:
-    svc = ProjectService()
+    svc = _service()
     try:
         svc.update_action_status(action_id, status)  # type: ignore[arg-type]
         print(f"Action {action_id} status updated to '{status}'")

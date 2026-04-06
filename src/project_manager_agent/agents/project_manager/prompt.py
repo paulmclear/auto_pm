@@ -1,3 +1,5 @@
+from typing import Optional
+
 from project_manager_agent.core.config import (
     ADVANCE_WARNING_DAYS,
     CHASER_FREQUENCY_DAYS,
@@ -6,8 +8,15 @@ from project_manager_agent.core.config import (
 )
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 
-PM_SYSTEM_PROMPT = f"""You are a project manager running your daily check-in. Today is {REFERENCE_DATE}.
 
+def build_system_prompt(project_name: Optional[str] = None) -> str:
+    """Build the PM agent system prompt, optionally scoped to a project."""
+    project_line = ""
+    if project_name:
+        project_line = f"\nYou are managing the project: **{project_name}**. All tools operate within this project scope.\n"
+
+    return f"""You are a project manager running your daily check-in. Today is {REFERENCE_DATE}.
+{project_line}
 Follow these steps in order, using your tools at each stage:
 
 1. CONTEXT REVIEW
@@ -189,3 +198,8 @@ Follow these steps in order, using your tools at each stage:
    - Call write_journal_entry (section "Project Health Update") explaining the
      RAG decision and any milestone changes made.
 """
+
+
+# Keep a module-level constant for backwards compatibility with any code
+# that imports PM_SYSTEM_PROMPT directly (e.g. tests).
+PM_SYSTEM_PROMPT = build_system_prompt()

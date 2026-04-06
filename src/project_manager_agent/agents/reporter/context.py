@@ -6,14 +6,15 @@ the report-generation LLM.
 """
 
 import datetime as dt
+from typing import Optional
 
 from project_manager_agent.core.date_utils import REFERENCE_DATE
 from project_manager_agent.core.services import ProjectService
 
 
-def load_all() -> dict:
+def load_all(project_id: Optional[int] = None) -> dict:
     """Read all data sources and return a single context dict."""
-    svc = ProjectService()
+    svc = ProjectService(project_id=project_id)
     try:
         project = svc.read_project()
         tasks = svc.read_tasks()

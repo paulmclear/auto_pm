@@ -21,6 +21,7 @@ Report sections:
 Run from the project root:
     python -m project_manager_agent.agents.reporter.agent
     python -m project_manager_agent.agents.reporter.agent --output path/to/report.md
+    python -m project_manager_agent.agents.reporter.agent --project 1
 """
 
 import argparse
@@ -65,11 +66,19 @@ def generate_report(context_str: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def save_report(content: str, output_path: Optional[Path] = None) -> Path:
+def save_report(
+    content: str,
+    output_path: Optional[Path] = None,
+    project_id: Optional[int] = None,
+) -> Path:
     """Save the report markdown to disk and return the path."""
     if output_path is None:
-        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = REPORTS_DIR / f"{REFERENCE_DATE}-status-report.md"
+        if project_id is not None:
+            reports_dir = REPORTS_DIR / str(project_id)
+        else:
+            reports_dir = REPORTS_DIR
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        output_path = reports_dir / f"{REFERENCE_DATE}-status-report.md"
 
     header = f"# Project Status Report\n**Date:** {REFERENCE_DATE}  \n\n"
     with open(output_path, "w", encoding="utf-8") as f:
@@ -83,16 +92,19 @@ def save_report(content: str, output_path: Optional[Path] = None) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def run(output_path: Optional[Path] = None) -> Path:
+def run(
+    output_path: Optional[Path] = None,
+    project_id: Optional[int] = None,
+) -> Path:
     """Generate and save the project status report. Returns the path."""
     print("Gathering project data...")
-    ctx = load_all()
+    ctx = load_all(project_id=project_id)
 
     print("Generating report...")
     context_str = format_context(ctx)
     report_content = generate_report(context_str)
 
-    path = save_report(report_content, output_path)
+    path = save_report(report_content, output_path, project_id=project_id)
     print(f"\nReport saved to: {path}\n")
     print("=" * 72)
     print(report_content)
@@ -109,5 +121,11 @@ if __name__ == "__main__":
         default=None,
         help="Override output file path (default: data/reports/YYYY-MM-DD-status-report.md)",
     )
+    parser.add_argument(
+        "--project",
+        type=int,
+        default=None,
+        help="Project ID to scope the report to. If omitted, runs unscoped.",
+    )
     args = parser.parse_args()
-    run(output_path=args.output)
+    run(output_path=args.output, project_id=args.project)
