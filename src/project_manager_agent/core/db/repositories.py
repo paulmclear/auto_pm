@@ -148,6 +148,7 @@ def _message_to_domain(row: MessageRow) -> Message:
         sender_name=row.sender_name,
         sender_email=row.sender_email,
         task_id=row.task_id,
+        is_read=row.is_read,
     )
 
 

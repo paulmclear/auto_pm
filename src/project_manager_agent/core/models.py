@@ -153,6 +153,7 @@ class Message:
     sender_name: str
     sender_email: str
     task_id: Optional[int] = None
+    is_read: bool = False
 
 
 # ---------------------------------------------------------------------------

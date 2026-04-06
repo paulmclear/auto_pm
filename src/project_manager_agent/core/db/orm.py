@@ -45,7 +45,9 @@ class ProjectRow(Base):
     planned_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
     actual_start: Mapped[dt.date] = mapped_column(Date, nullable=False)
     forecast_end: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    rag_status: Mapped[str] = mapped_column(String(20), nullable=False)  # green|amber|red
+    rag_status: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # green|amber|red
     rag_reason: Mapped[str] = mapped_column(Text, nullable=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -112,7 +114,9 @@ class TaskRow(Base):
     owner_name: Mapped[str] = mapped_column(String(255), nullable=False)
     owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
     due_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="not_started")
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="not_started"
+    )
     priority: Mapped[str] = mapped_column(
         String(20), nullable=False, default="medium"
     )  # high|medium|low
@@ -206,7 +210,9 @@ class MessageRow(Base):
     project_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("projects.id"), index=True, nullable=True
     )
-    direction: Mapped[str] = mapped_column(String(20), nullable=False)  # inbound|outbound
+    direction: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # inbound|outbound
     timestamp: Mapped[str] = mapped_column(String(50), nullable=False)
     owner_name: Mapped[str] = mapped_column(String(255), nullable=False)
     owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -214,3 +220,4 @@ class MessageRow(Base):
     sender_name: Mapped[str] = mapped_column(String(255), nullable=False)
     sender_email: Mapped[str] = mapped_column(String(255), nullable=False)
     task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
