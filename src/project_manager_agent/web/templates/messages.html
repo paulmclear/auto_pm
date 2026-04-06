@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Messages{% endblock %}
 {% block content %}
-<div x-data="messagesApp()" x-init="loadMessages()" class="flex flex-col h-[calc(100vh-6rem)]">
+<div x-data="messagesApp()" x-init="init()" class="flex flex-col h-[calc(100vh-6rem)]">
     <!-- Header with tabs -->
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold text-gray-900">Messages</h1>
@@ -189,6 +189,18 @@ function messagesApp() {
         compose: { stakeholderIdx: '', subject: '', body: '', taskId: '', date: defaultDate },
         composeSending: false,
         composeError: '',
+
+        async init() {
+            await this.loadMessages();
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('compose') === '1') {
+                await this.openCompose();
+                if (params.get('taskId')) this.compose.taskId = params.get('taskId');
+                if (params.get('subject')) this.compose.subject = decodeURIComponent(params.get('subject'));
+                // Clean URL without reloading
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        },
 
         async loadMessages() {
             this.loading = true;

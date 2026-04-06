@@ -34,6 +34,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Priority</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Blocked</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 bg-white">
@@ -65,9 +66,20 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-500 max-w-xs">{{ t.blocked_reason or "\u2014" }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                        <a href="/projects/{{ project_id }}/messages?compose=1&taskId={{ t.task_id }}&subject={{ ('Re: Task ' ~ t.task_id ~ ' – ' ~ t.description) | urlencode }}"
+                           class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 hover:underline"
+                           title="Send message about this task">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Message
+                        </a>
+                    </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">No tasks found.</td></tr>
+                <tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-500">No tasks found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
