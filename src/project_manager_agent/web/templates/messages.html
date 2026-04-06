@@ -64,13 +64,20 @@
                 <div class="p-6">
                     <div class="border-b border-gray-200 pb-4 mb-4">
                         <h2 class="text-lg font-semibold text-gray-900" x-text="selected.subject"></h2>
-                        <div class="mt-2 flex items-center gap-x-4 text-sm text-gray-500">
+                        <div class="mt-2 flex flex-wrap items-center gap-x-4 text-sm text-gray-500">
                             <span>From: <span class="text-gray-700" x-text="selected.sender"></span></span>
                             <span>To: <span class="text-gray-700" x-text="selected.recipient"></span></span>
                             <span x-text="formatDate(selected.date)"></span>
+                            <template x-if="selectedDetail && selectedDetail.task_id">
+                                <a :href="'/projects/' + {{ project_id }} + '/tasks/' + selectedDetail.task_id"
+                                   class="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                    Task #<span x-text="selectedDetail.task_id"></span>
+                                </a>
+                            </template>
                         </div>
                     </div>
-                    <div class="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap" x-text="selected.subject"></div>
+                    <div class="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap"
+                         x-text="selectedDetail ? selectedDetail.body : ''"></div>
                 </div>
             </template>
         </div>
@@ -85,6 +92,7 @@ function messagesApp() {
         messages: [],
         selected: null,
         selectedId: null,
+        selectedDetail: null,
         loading: false,
         unreadInbox: 0,
         unreadOutbox: 0,
@@ -97,6 +105,9 @@ function messagesApp() {
                 this.messages = data.items;
                 this.unreadInbox = data.unread_inbox;
                 this.unreadOutbox = data.unread_outbox;
+                if (this.messages.length > 0 && !this.selected) {
+                    this.selectMessage(this.messages[0]);
+                }
             } finally {
                 this.loading = false;
             }
@@ -106,17 +117,21 @@ function messagesApp() {
             this.tab = t;
             this.selected = null;
             this.selectedId = null;
+            this.selectedDetail = null;
             this.loadMessages();
         },
 
         async selectMessage(msg) {
             this.selected = msg;
             this.selectedId = msg.id;
+            this.selectedDetail = null;
             if (!msg.read && this.tab === 'inbound') {
                 await fetch(`/api/messages/${msg.id}/read?project_id=${projectId}`, { method: 'PATCH' });
                 msg.read = true;
                 this.unreadInbox = Math.max(0, this.unreadInbox - 1);
             }
+            const resp = await fetch(`/api/messages/${msg.id}?project_id=${projectId}`);
+            this.selectedDetail = await resp.json();
         },
 
         formatDate(d) {

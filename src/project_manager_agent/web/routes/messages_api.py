@@ -65,6 +65,28 @@ async def list_messages(
         svc.close()
 
 
+@router.get("/{message_id}")
+async def get_message(message_id: str, project_id: int):
+    """Return full message content."""
+    svc = ProjectService(project_id=project_id)
+    try:
+        for msg in svc.read_inbox() + svc.read_outbox():
+            if msg.message_id == message_id:
+                return {
+                    "id": msg.message_id,
+                    "sender": msg.sender_name,
+                    "recipient": msg.owner_name,
+                    "body": msg.message,
+                    "date": msg.timestamp,
+                    "read": msg.is_read,
+                    "direction": msg.direction,
+                    "task_id": msg.task_id,
+                }
+        raise HTTPException(status_code=404, detail="Message not found")
+    finally:
+        svc.close()
+
+
 @router.patch("/{message_id}/read")
 async def mark_message_read(message_id: str, project_id: int):
     """Mark a message as read."""
