@@ -93,4 +93,39 @@ Plain functions wrapped with `langchain_core.tools.Tool` (for zero-arg tools usi
 
 ## Backlog
 
-Planned features are tracked in `docs/backlog.json`. Each item has `id`, `title`, `description`, `priority` (high/medium/low), `category`, and `status` (open/complete). Before adding a new capability, check this file to see if it is already planned or in progress. Current open items include per-task outbox tracking, task dependency enforcement, overdue detection, escalation logic, advance-warning reminders, inbox intent parsing, a config file for thresholds, and idempotency guards.
+Planned features are tracked in beads, using the `bd` CLI. Issue data lives in `.beads/`.
+
+### Beads Quick Reference
+
+```bash
+# View work
+bd ready                          # Show issues with no blockers (ready to start)
+bd list --status=open             # All open issues
+bd list --status=in_progress      # Active work
+bd show <id>                      # Full details, deps, blockers
+bd blocked                        # All blocked issues
+bd stats                          # Project health summary
+bd search <query>                 # Search by keyword
+
+# Create
+bd create --title="..." --description="..." --type=epic|feature|task|bug --priority=2
+# Priority: 0-4 (0=critical, 4=backlog). Do NOT use "high"/"medium"/"low".
+
+# Update
+bd update <id> --status=in_progress   # Claim work
+bd update <id> --title="..."          # Update fields (also --description, --notes, --design)
+bd close <id>                         # Mark complete
+bd close <id1> <id2> ...              # Close multiple at once
+
+# Dependencies
+bd dep add <issue> <depends-on>   # issue depends on depends-on (depends-on blocks issue)
+```
+
+### Conventions
+
+- Create a bead **before** writing code for it
+- Set `--status=in_progress` when starting work
+- `bd close` when done — never leave stale in-progress issues
+- Epics use `--type=epic`; child stories use `--type=task` or `--type=feature`
+- Do NOT use `bd edit` (opens $EDITOR, blocks agents)
+- Plan docs live in `docs/plans/epic-N-*.md`
