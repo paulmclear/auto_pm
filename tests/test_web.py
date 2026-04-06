@@ -81,11 +81,11 @@ PREFIX = "/projects/1"
 # ---------------------------------------------------------------------------
 
 
-class TestRootRedirect:
-    def test_root_redirects_to_project(self, client: TestClient):
-        resp = client.get("/", follow_redirects=False)
-        assert resp.status_code == 302
-        assert "/projects/" in resp.headers["location"]
+class TestPortfolio:
+    def test_portfolio_returns_200(self, client: TestClient):
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert "Portfolio" in resp.text
 
 
 # ---------------------------------------------------------------------------

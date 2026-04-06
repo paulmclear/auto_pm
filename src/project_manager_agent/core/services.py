@@ -173,6 +173,57 @@ class ProjectService:
         )
         return [{"id": r.id, "name": r.name} for r in rows]
 
+    def list_project_summaries(self) -> list[dict]:
+        """Return summary data for all projects (portfolio view).
+
+        Each dict contains: id, name, rag_status, forecast_end,
+        pct_complete, next_milestone.
+        """
+        from project_manager_agent.core.db.orm import (
+            MilestoneRow,
+            ProjectRow,
+            TaskRow,
+        )
+
+        projects = self._session.query(ProjectRow).order_by(ProjectRow.name).all()
+        summaries = []
+        for p in projects:
+            # Task completion %
+            tasks = (
+                self._session.query(TaskRow.status)
+                .filter(TaskRow.project_id == p.id)
+                .all()
+            )
+            total = len(tasks)
+            complete = sum(1 for t in tasks if t.status == "complete")
+            pct = round(complete * 100 / total) if total else 0
+
+            # Next pending milestone (earliest forecast_date)
+            next_ms = (
+                self._session.query(MilestoneRow)
+                .filter(
+                    MilestoneRow.project_id == p.id,
+                    MilestoneRow.status == "pending",
+                )
+                .order_by(MilestoneRow.forecast_date)
+                .first()
+            )
+
+            summaries.append(
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "rag_status": p.rag_status,
+                    "forecast_end": p.forecast_end,
+                    "pct_complete": pct,
+                    "total_tasks": total,
+                    "complete_tasks": complete,
+                    "next_milestone": next_ms.name if next_ms else None,
+                    "next_milestone_date": next_ms.forecast_date if next_ms else None,
+                }
+            )
+        return summaries
+
     # -- Journal (web helpers) -----------------------------------------------
 
     def list_journal_dates(self) -> list[str]:

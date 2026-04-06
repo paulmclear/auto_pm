@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio — Project Manager</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between mb-10">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-x-3">
+                        <div class="h-10 w-10 rounded-lg bg-indigo-500 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">Portfolio</h1>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">All projects at a glance. Click a card to view details.</p>
+                </div>
+            </div>
+
+            {% if projects %}
+            <!-- Project cards grid -->
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {% for p in projects %}
+                <a href="/projects/{{ p.id }}/" class="block rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 hover:shadow-md hover:ring-gray-300 transition-all duration-150">
+                    <div class="p-6">
+                        <!-- Header: name + RAG badge -->
+                        <div class="flex items-start justify-between gap-x-3">
+                            <h2 class="text-base font-semibold leading-6 text-gray-900 truncate">{{ p.name }}</h2>
+                            {% set rag_colors = {'green': 'bg-green-100 text-green-700 ring-green-600/20', 'amber': 'bg-yellow-100 text-yellow-700 ring-yellow-600/20', 'red': 'bg-red-100 text-red-700 ring-red-600/20'} %}
+                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ rag_colors.get(p.rag_status, 'bg-gray-100 text-gray-600 ring-gray-500/10') }}">
+                                {{ p.rag_status | upper }}
+                            </span>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Tasks complete</span>
+                                <span class="font-medium text-gray-900">{{ p.pct_complete }}%</span>
+                            </div>
+                            <div class="mt-1.5 h-2 w-full rounded-full bg-gray-100">
+                                {% set bar_color = 'bg-green-500' if p.pct_complete >= 75 else ('bg-yellow-500' if p.pct_complete >= 40 else 'bg-indigo-500') %}
+                                <div class="{{ bar_color }} h-2 rounded-full transition-all" style="width: {{ p.pct_complete }}%"></div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-400">{{ p.complete_tasks }} of {{ p.total_tasks }} tasks</p>
+                        </div>
+
+                        <!-- Details -->
+                        <dl class="mt-4 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Next milestone</dt>
+                                <dd class="text-gray-900 text-right truncate ml-2">{{ p.next_milestone or "None" }}</dd>
+                            </div>
+                            {% if p.next_milestone_date %}
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Milestone date</dt>
+                                <dd class="text-gray-900">{{ p.next_milestone_date }}</dd>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Forecast end</dt>
+                                <dd class="text-gray-900">{{ p.forecast_end }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-semibold text-gray-900">No projects</h3>
+                <p class="mt-1 text-sm text-gray-500">No projects found in the database.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -6,8 +6,7 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Cookie, Depends, FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -61,26 +60,22 @@ def create_app() -> FastAPI:
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-    # Root redirect: cookie-stored project or first available
+    # Portfolio dashboard — shows all projects as card grid
     @app.get("/")
-    async def root_redirect(
-        selected_project_id: str | None = Cookie(default=None),
-    ):
-        if selected_project_id and selected_project_id.isdigit():
-            return RedirectResponse(
-                url=f"/projects/{selected_project_id}/", status_code=302
-            )
-        # Fall back to first project in DB
+    async def portfolio(request: Request):
         svc = ProjectService()
         try:
-            projects = svc.list_all_projects()
+            summaries = svc.list_project_summaries()
         finally:
             svc.close()
-        if projects:
-            return RedirectResponse(
-                url=f"/projects/{projects[0]['id']}/", status_code=302
-            )
-        return RedirectResponse(url="/static/style.css", status_code=302)
+        return templates.TemplateResponse(
+            "portfolio.html",
+            {
+                "request": request,
+                "projects": summaries,
+                "active_page": "portfolio",
+            },
+        )
 
     # Project-scoped route modules
     from project_manager_agent.web.routes import (
