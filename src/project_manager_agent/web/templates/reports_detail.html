@@ -9,8 +9,352 @@
         Back to reports
     </a>
 </div>
-<h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:tracking-tight mb-6">Report — {{ date }}</h1>
-<article class="prose prose-sm max-w-none rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
-    {{ content_html | safe }}
-</article>
+
+<div x-data="reportDashboard()" x-init="init()">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:tracking-tight">Report — {{ date }}</h1>
+        <!-- Tab switcher -->
+        <div class="mt-3 md:mt-0 inline-flex rounded-lg bg-gray-100 p-1">
+            <button @click="tab = 'visual'" :class="tab === 'visual' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'" class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors">
+                Visual
+            </button>
+            <button @click="tab = 'markdown'" :class="tab === 'markdown' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'" class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors">
+                Markdown
+            </button>
+        </div>
+    </div>
+
+    <!-- Visual Dashboard Tab -->
+    <div x-show="tab === 'visual'" x-cloak>
+        {% if report_data %}
+        <!-- RAG Status + Executive Summary -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            <!-- RAG Status Card -->
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6 flex flex-col items-center justify-center">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">RAG Status</p>
+                {% set rag = report_data.rag_status %}
+                {% if rag == 'green' %}
+                <div class="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
+                    <div class="h-10 w-10 rounded-full bg-emerald-500"></div>
+                </div>
+                <span class="text-sm font-semibold text-emerald-700 uppercase">Green</span>
+                {% elif rag == 'amber' %}
+                <div class="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mb-2">
+                    <div class="h-10 w-10 rounded-full bg-amber-500"></div>
+                </div>
+                <span class="text-sm font-semibold text-amber-700 uppercase">Amber</span>
+                {% else %}
+                <div class="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center mb-2">
+                    <div class="h-10 w-10 rounded-full bg-red-500"></div>
+                </div>
+                <span class="text-sm font-semibold text-red-700 uppercase">Red</span>
+                {% endif %}
+                {% if report_data.rag_reason %}
+                <p class="mt-2 text-xs text-gray-500 text-center">{{ report_data.rag_reason }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Executive Summary Card -->
+            <div class="lg:col-span-3 rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Executive Summary</h2>
+                <p class="text-sm text-gray-700 leading-relaxed">{{ report_data.executive_summary }}</p>
+            </div>
+        </div>
+
+        <!-- Task Statistics Cards -->
+        {% set stats = report_data.task_statistics %}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4 text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ stats.by_status.complete }}</p>
+                <p class="text-xs text-gray-500 mt-1">Complete</p>
+            </div>
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4 text-center">
+                <p class="text-2xl font-bold text-indigo-600">{{ stats.by_status.in_progress }}</p>
+                <p class="text-xs text-gray-500 mt-1">In Progress</p>
+            </div>
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4 text-center">
+                <p class="text-2xl font-bold text-gray-500">{{ stats.by_status.not_started }}</p>
+                <p class="text-xs text-gray-500 mt-1">Not Started</p>
+            </div>
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-4 text-center">
+                <p class="text-2xl font-bold text-red-600">{{ stats.by_status.blocked }}</p>
+                <p class="text-xs text-gray-500 mt-1">Blocked</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Task Status Doughnut -->
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Tasks by Status</h2>
+                <div class="flex justify-center" style="max-height: 280px;">
+                    <canvas id="chart-status"></canvas>
+                </div>
+            </div>
+            <!-- Tasks by Phase Bar -->
+            <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Tasks by Phase</h2>
+                <div style="max-height: 280px;">
+                    <canvas id="chart-phase"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Milestones Table -->
+        {% if report_data.milestone_statuses %}
+        <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 mb-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Milestones</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Milestone</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Planned</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Forecast</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for ms in report_data.milestone_statuses %}
+                        <tr>
+                            <td class="px-6 py-3 text-sm text-gray-900">{{ ms.name }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ ms.planned_date }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ ms.forecast_date }}</td>
+                            <td class="px-6 py-3">
+                                {% if ms.status == 'achieved' %}
+                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Achieved</span>
+                                {% elif ms.status == 'missed' %}
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Missed</span>
+                                {% else %}
+                                <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Overdue Tasks Table -->
+        {% if report_data.overdue_tasks %}
+        <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 mb-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Overdue Tasks</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Days Overdue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for t in report_data.overdue_tasks %}
+                        <tr>
+                            <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ t.task_id }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-700">{{ t.description }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ t.owner }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ t.due_date }}</td>
+                            <td class="px-6 py-3">
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{{ t.days_overdue }}d</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RAID Highlights Table -->
+        {% if report_data.raid_highlights %}
+        <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 mb-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">RAID Highlights</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Impact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for r in report_data.raid_highlights %}
+                        <tr>
+                            <td class="px-6 py-3">
+                                {% if r.type == 'risk' %}
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Risk</span>
+                                {% elif r.type == 'issue' %}
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Issue</span>
+                                {% elif r.type == 'assumption' %}
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">Assumption</span>
+                                {% else %}
+                                <span class="inline-flex items-center rounded-full bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">Decision</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-700">{{ r.title }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ r.owner }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ r.severity_or_impact or '—' }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-500">{{ r.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recommendations -->
+        {% if report_data.recommendations %}
+        <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 mb-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Recommendations</h2>
+            </div>
+            <ul class="divide-y divide-gray-100">
+                {% for rec in report_data.recommendations %}
+                <li class="px-6 py-4 flex items-start gap-x-3">
+                    {% if rec.priority == 'high' %}
+                    <span class="mt-0.5 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">High</span>
+                    {% elif rec.priority == 'medium' %}
+                    <span class="mt-0.5 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Medium</span>
+                    {% else %}
+                    <span class="mt-0.5 inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Low</span>
+                    {% endif %}
+                    <div>
+                        <p class="text-sm text-gray-700">{{ rec.summary }}</p>
+                        {% if rec.related_item %}
+                        <p class="text-xs text-gray-400 mt-1">Related: {{ rec.related_item }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- No structured data available — fallback to markdown -->
+        <div class="rounded-lg bg-amber-50 ring-1 ring-amber-200 p-4 mb-6">
+            <p class="text-sm text-amber-700">No structured report data available for this date. Showing markdown view.</p>
+        </div>
+        <article class="prose prose-sm max-w-none rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
+            {{ content_html | safe }}
+        </article>
+        {% endif %}
+    </div>
+
+    <!-- Markdown Tab -->
+    <div x-show="tab === 'markdown'" x-cloak>
+        <article class="prose prose-sm max-w-none rounded-lg bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
+            {{ content_html | safe }}
+        </article>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+function reportDashboard() {
+    return {
+        tab: 'visual',
+        charts: [],
+        init() {
+            {% if report_data and report_data.task_statistics %}
+            this.$nextTick(() => this.renderCharts());
+            {% endif %}
+        },
+        renderCharts() {
+            {% if report_data and report_data.task_statistics %}
+            const stats = {{ report_data.task_statistics | tojson }};
+
+            // Task Status Doughnut
+            const statusCtx = document.getElementById('chart-status');
+            if (statusCtx) {
+                this.charts.push(new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Complete', 'In Progress', 'Not Started', 'Blocked'],
+                        datasets: [{
+                            data: [
+                                stats.by_status.complete,
+                                stats.by_status.in_progress,
+                                stats.by_status.not_started,
+                                stats.by_status.blocked
+                            ],
+                            backgroundColor: ['#10b981', '#6366f1', '#9ca3af', '#ef4444'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 12 }, padding: 16, usePointStyle: true }
+                            }
+                        },
+                        cutout: '55%'
+                    }
+                }));
+            }
+
+            // Tasks by Phase Stacked Bar
+            const phaseCtx = document.getElementById('chart-phase');
+            if (phaseCtx && stats.by_phase && stats.by_phase.length > 0) {
+                const phases = stats.by_phase;
+                this.charts.push(new Chart(phaseCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: phases.map(p => p.phase_name),
+                        datasets: [
+                            { label: 'Complete', data: phases.map(p => p.complete), backgroundColor: '#10b981' },
+                            { label: 'In Progress', data: phases.map(p => p.in_progress), backgroundColor: '#6366f1' },
+                            { label: 'Not Started', data: phases.map(p => p.not_started), backgroundColor: '#9ca3af' },
+                            { label: 'Blocked', data: phases.map(p => p.blocked), backgroundColor: '#ef4444' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 12 }, padding: 16, usePointStyle: true }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { font: { size: 11 }, precision: 0 },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        }
+                    }
+                }));
+            }
+            {% endif %}
+        }
+    };
+}
+</script>
 {% endblock %}

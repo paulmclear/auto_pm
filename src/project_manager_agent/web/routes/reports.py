@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import markdown
 from fastapi import APIRouter, HTTPException, Request
 
@@ -29,6 +31,10 @@ async def report_detail(request: Request, project_id: int, date: str, svc: Servi
 
     content_html = markdown.markdown(content_md)
 
+    # Load structured JSON data if available
+    report_json_str = svc.get_report_json(date)
+    report_data = json.loads(report_json_str) if report_json_str else None
+
     return templates.TemplateResponse(
         "reports_detail.html",
         make_context(
@@ -38,5 +44,6 @@ async def report_detail(request: Request, project_id: int, date: str, svc: Servi
             "reports",
             date=date,
             content_html=content_html,
+            report_data=report_data,
         ),
     )
