@@ -140,10 +140,13 @@ def seed_demo_data(session: Session) -> None:
     # ------------------------------------------------------------------
     # Tasks (11 total across 3 phases)
     # ------------------------------------------------------------------
+    pid = project.id  # project_id FK for child rows
+
     tasks = [
         # Phase 1 — Discovery (all complete)
         TaskRow(
             task_id=1,
+            project_id=pid,
             description="Conduct stakeholder interviews",
             owner_name="Mary",
             owner_email="mary@test.com",
@@ -155,6 +158,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=2,
+            project_id=pid,
             description="Write business requirements document",
             owner_name="Mary",
             owner_email="mary@test.com",
@@ -166,6 +170,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=3,
+            project_id=pid,
             description="Produce UX wireframes",
             owner_name="Sarah",
             owner_email="sarah@test.com",
@@ -177,6 +182,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=4,
+            project_id=pid,
             description="Design technical architecture",
             owner_name="Chris",
             owner_email="chris@test.com",
@@ -189,6 +195,7 @@ def seed_demo_data(session: Session) -> None:
         # Phase 2 — Design & Build (in progress / blocked)
         TaskRow(
             task_id=5,
+            project_id=pid,
             description="Develop REST API layer",
             owner_name="Chris",
             owner_email="chris@test.com",
@@ -200,6 +207,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=6,
+            project_id=pid,
             description="Build frontend application",
             owner_name="Sarah",
             owner_email="sarah@test.com",
@@ -211,6 +219,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=7,
+            project_id=pid,
             description="Migrate database to new schema",
             owner_name="Chris",
             owner_email="chris@test.com",
@@ -227,6 +236,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=8,
+            project_id=pid,
             description="Integration testing",
             owner_name="Bob",
             owner_email="bob@test.com",
@@ -239,6 +249,7 @@ def seed_demo_data(session: Session) -> None:
         # Phase 3 — Testing & Launch (not started)
         TaskRow(
             task_id=9,
+            project_id=pid,
             description="User acceptance testing",
             owner_name="Mary",
             owner_email="mary@test.com",
@@ -250,6 +261,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=10,
+            project_id=pid,
             description="Security penetration test and sign-off",
             owner_name="Bob",
             owner_email="bob@test.com",
@@ -265,6 +277,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         TaskRow(
             task_id=11,
+            project_id=pid,
             description="Go-live deployment and cutover",
             owner_name="Chris",
             owner_email="chris@test.com",
@@ -283,6 +296,7 @@ def seed_demo_data(session: Session) -> None:
     raid_items = [
         RaidItemRow(
             raid_id=1,
+            project_id=pid,
             type="risk",
             title="DBA resource unavailability causes further migration delay",
             description=(
@@ -304,6 +318,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=2,
+            project_id=pid,
             type="risk",
             title="Breaking changes to third-party payment API",
             description=(
@@ -325,6 +340,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=3,
+            project_id=pid,
             type="assumption",
             title="Cloud infrastructure will be provisioned before build phase ends",
             description=(
@@ -341,6 +357,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=4,
+            project_id=pid,
             type="assumption",
             title="Users will be available for UAT during w/c 2026-04-14",
             description=(
@@ -356,6 +373,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=5,
+            project_id=pid,
             type="issue",
             title="DBA schema sign-off delayed — blocking database migration",
             description=(
@@ -371,6 +389,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=6,
+            project_id=pid,
             type="decision",
             title="Use React for the frontend application",
             description=(
@@ -395,6 +414,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         RaidItemRow(
             raid_id=7,
+            project_id=pid,
             type="decision",
             title="Defer mobile native app to a follow-on project",
             description=(
@@ -425,6 +445,7 @@ def seed_demo_data(session: Session) -> None:
     actions = [
         ActionRow(
             action_id=1,
+            project_id=pid,
             description=(
                 "Escalate DBA schema sign-off to DBA team lead — request review "
                 "be completed by 2026-03-24."
@@ -438,6 +459,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         ActionRow(
             action_id=2,
+            project_id=pid,
             description=(
                 "Confirm cloud infrastructure provisioning timeline with the "
                 "infrastructure team lead and update the project plan."
@@ -450,6 +472,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         ActionRow(
             action_id=3,
+            project_id=pid,
             description=(
                 "Document the API versioning strategy and confirm whether the "
                 "payment integration targets v2 or v3 of the provider API."
@@ -469,6 +492,7 @@ def seed_demo_data(session: Session) -> None:
     messages = [
         MessageRow(
             message_id=str(uuid.uuid4()),
+            project_id=pid,
             direction="inbound",
             timestamp="2026-03-20T08:14:00",
             owner_name="Chris",
@@ -484,6 +508,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         MessageRow(
             message_id=str(uuid.uuid4()),
+            project_id=pid,
             direction="inbound",
             timestamp="2026-03-20T09:02:00",
             owner_name="Sarah",
@@ -497,6 +522,7 @@ def seed_demo_data(session: Session) -> None:
         ),
         MessageRow(
             message_id=str(uuid.uuid4()),
+            project_id=pid,
             direction="outbound",
             timestamp="2026-03-18T09:00:00",
             owner_name="Bob",

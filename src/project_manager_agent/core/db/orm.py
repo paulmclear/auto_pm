@@ -103,6 +103,9 @@ class TaskRow(Base):
     __tablename__ = "tasks"
 
     task_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("projects.id"), index=True, nullable=True
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     owner_name: Mapped[str] = mapped_column(String, nullable=False)
     owner_email: Mapped[str] = mapped_column(String, nullable=False)
@@ -128,6 +131,9 @@ class RaidItemRow(Base):
     __tablename__ = "raid_items"
 
     raid_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("projects.id"), index=True, nullable=True
+    )
     type: Mapped[str] = mapped_column(
         String, nullable=False
     )  # risk|assumption|issue|decision
@@ -174,6 +180,9 @@ class ActionRow(Base):
     __tablename__ = "actions"
 
     action_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("projects.id"), index=True, nullable=True
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     owner_name: Mapped[str] = mapped_column(String, nullable=False)
     owner_email: Mapped[str] = mapped_column(String, nullable=False)
@@ -192,6 +201,9 @@ class MessageRow(Base):
     __tablename__ = "messages"
 
     message_id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("projects.id"), index=True, nullable=True
+    )
     direction: Mapped[str] = mapped_column(String, nullable=False)  # inbound|outbound
     timestamp: Mapped[str] = mapped_column(String, nullable=False)
     owner_name: Mapped[str] = mapped_column(String, nullable=False)
