@@ -1,0 +1,120 @@
+# Iteration 8 Log
+
+## Metadata
+
+- **Task ID**: pm-atk.1
+- **Task Title**: Externalise thresholds into a config file
+- **Description**: Move hardcoded behaviour thresholds into a data/config.json (or similar) file: chaser frequency (how often to re-remind), advance warning days, escalation threshold (days overdue before escalating), e...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T21:12:45.770Z
+- **Ended At**: 2026-03-19T21:15:51.267Z
+- **Duration**: 3m 5s
+- **Input Tokens**: 22920
+- **Output Tokens**: 6961
+- **Total Tokens**: 1179458
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me study the codebase to find hardcoded thresholds and understand the current state.
+[94m[Agent][0m Find hardcoded thresholds
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m $ find /Users/paulmclear/projects/_LEARNING/project_manager -type f -name "*.json" | grep -E "(config|...
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96m**/agents/project_manager/*.py[0m
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96m**/agents/reporter/*.py[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src[0m pattern: [96mchaser|CHASER|reminder|REMINDER|frequency|FREQUENCY[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src[0m pattern: [96madvance.*warning|ADVANCE.*WARNING|warning.*day|days.*before|WARNING_DAYS[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src[0m pattern: [96mescalat|ESCALAT|overdue|OVERDUE|threshold|THRESHOLD[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+[94m[Bash][0m $ ls -la /Users/paulmclear/projects/_LEARNING/project_manager/data/ 2>/dev/null | grep -E "json|config...
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent[0m pattern: [96mwithin\s+2\s+days|2\s+day|lead_days|overdue_threshold|3\s+day|days.*overdue[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+[94m[Bash][0m $ grep -n "def fetch_escalation_candidates\|def fetch_upcoming_due_tasks\|overdue_threshold_days.*=\|l...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m
+[94m[Bash][0m $ grep -rn "overdue\|threshold\|chaser\|escalat\|reminder\|warning" /Users/paulmclear/projects/_LEARNI...
+[94m[Bash][0m $ find /Users/paulmclear/projects/_LEARNING/project_manager -name "backlog.json" -o -name "config.json...
+[94m[Bash][0m $ ls -la /Users/paulmclear/projects/_LEARNING/project_manager/docs/ 2>/dev/null
+[94m[Bash][0m $ grep -rn "= 2\|= 3\|= 5\|THRESHOLD\|FREQUENCY\|WARNING" /Users/paulmclear/projects/_LEARNING/project...
+Now let me read the key files with the hardcoded values.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m
+[94m[Bash][0m List data directory contents $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/
+Now I have a clear picture. I need to:
+1. Create `data/config.json` with the thresholds
+2. Add a config loader
+3. Update `tools.py` and `prompt.py` to read from config
+
+Let me implement this.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/data/config.json[0m "{
+  "chaser_frequency_days": 2,
+  "advance_warning_days": 2,
+  "escalation_threshold_days": 3,
+  "re_escalation_gap_days": 3
+}
+"
+Now create the config loader module.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/date_utils.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/config.py[0m """"
+Agent configuration loader
+===========================
+Reads behaviour thresholds from data/config.json at import time.
+To change agent behaviour, edit data/config.json — no code changes needed.
+"... (1022 chars)"
+Now update `tools.py` to use config values instead of hardcoded defaults.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "from project_manager_agent.core.date_utils import ..." → "from project_manager_agent.core.config import (
+  ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_escalation_candidates(overdue_threshold_..." → "def fetch_escalation_candidates(overdue_threshold_..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_upcoming_due_tasks(lead_days: int = 2) -..." → "def fetch_upcoming_due_tasks(lead_days: int = ADVA..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "class FetchEscalationCandidatesInput(BaseModel):
+ ..." → "class FetchEscalationCandidatesInput(BaseModel):
+ ..."
+Now update `prompt.py` to use config values instead of hardcoded numbers.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "from project_manager_agent.core.date_utils import ..." → "from project_manager_agent.core.config import (
+  ..."
+Now replace all the hardcoded numbers in the prompt with the config variables.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - Call fetch_upcoming_due_tasks (default lead_d..." → "   - Call fetch_upcoming_due_tasks (default lead_d..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - Check outbox history on a PER-TASK basis — do..." → "   - Check outbox history on a PER-TASK basis — do..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "         chase intervals, and more prominent journ..." → "         chase intervals (every {CHASER_FREQUENCY_..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "         overdue and request a status update and r..." → "         overdue and request a status update and r..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "         overdue, by how many days, its high prior..." → "         overdue, by how many days, its high prior..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - ESCALATION LOGIC:
+       * Call fetch_escalat..." → "   - ESCALATION LOGIC:
+       * Call fetch_escalat..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "         Only re-escalate if the task is significa..." → "         Only re-escalate if the task is significa..."
+Now update the remaining references to "next 2 days" in the prompt (step 4 task review section).
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "       * UPCOMING DUE TASKS (from fetch_upcoming_d..." → "       * UPCOMING DUE TASKS (from fetch_upcoming_d..."
+Now run lint to verify everything is clean.
+[94m[Bash][0m Run linting and format check $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: src/project_manager_agent/agents/project_manager/tools.py
+1 file would be reformatted, 37 files already formatted][0m
+[94m[Bash][0m Auto-format code $ uv run ruff format .
+Now update the backlog item to mark it complete.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/docs/backlog.json[0m pattern: [96mconfig.*threshold|externalise|externalize[0m
+
+[91m[Error: <tool_use_error>Path does not exist: /Users/paulmclear/projects/_LEARNING/project_manager/docs/backlog.json. Note: your current working directory is /Users/paulmclear/projects/_LEARNING/project_manager.</tool_use_error>][0m
+[94m[Glob][0m pattern: [96m**/backlog*[0m
+Now close the bead and update progress.
+[94m[Bash][0m Close the bead issue $ bd close pm-atk.1 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now append to progress.md.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - The prompt is critical for adoption — without ..." → "  - The prompt is critical for adoption — without ..."
+Add the config pattern to the codebase patterns section at the top of progress.md.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "- **Prompt structure**: The system prompt in `prom..." → "- **Prompt structure**: The system prompt in `prom..."
+Done. Here's what was implemented:
+
+- **`data/config.json`** — New config file with 4 thresholds: `chaser_frequency_days` (2), `advance_warning_days` (2), `escalation_threshold_days` (3), `re_escalation_gap_days` (3)
+- **`core/config.py`** — Loader module that reads config at import time with graceful fallback defaults
+- **`tools.py`** — Function defaults and Pydantic schemas now reference config constants instead of hardcoded values
+- **`prompt.py`** — All 8 hardcoded threshold references replaced with f-string interpolated config constants
+
+To change agent behaviour, edit `data/config.json` — no code changes needed.
+
+<promise>COMPLETE</promise>

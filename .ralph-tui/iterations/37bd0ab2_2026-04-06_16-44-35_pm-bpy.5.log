@@ -1,0 +1,82 @@
+# Iteration 12 Log
+
+## Metadata
+
+- **Task ID**: pm-bpy.5
+- **Task Title**: 12.5 — Trend charts across reports
+- **Description**: Load data from multiple report JSONs to render trend lines: % tasks complete over time, open risk count, overdue task count. Displayed on the report page or as a dedicated /trends view. Acceptance: Tr...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:44:35.452Z
+- **Ended At**: 2026-04-06T15:46:48.743Z
+- **Duration**: 2m 13s
+- **Input Tokens**: 66
+- **Output Tokens**: 7387
+- **Total Tokens**: 7453
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/
+[94m[Bash][0m $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports_api.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/schema.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_detail.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_list.html[0m
+[94m[Bash][0m $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/reports/
+No report files exist yet. Let me check for sample JSON reports and look at how the existing API serves them.
+[94m[Bash][0m $ find /Users/paulmclear/projects/_LEARNING/project_manager/data -name "*.json" | head -20
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m pattern: [96mget_report_json|list_report_names|_reports_dir[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/base.html[0m
+Now let me look at the service methods for reports and the existing API endpoint to understand what data is available.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m
+Now I have a clear picture. I need to:
+
+1. Add a new API endpoint `GET /api/reports/trends` that loads all report JSONs and extracts trend data
+2. Add a trends view (either on the reports page or a new `/trends` route)
+
+Let me implement this. I'll add trends to the reports list page since it's the most natural location.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/_nav.html[0m
+Now I have everything I need. Let me implement the trend charts feature:
+
+1. Add a `GET /api/reports/trends` endpoint that aggregates data across all report JSONs
+2. Add the trends charts to the reports list page using Chart.js
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+Now I'll add a method to load all report JSONs and the API endpoint, then update the template.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    def get_report_json(self, date: str) -> str | ..." → "    def get_report_json(self, date: str) -> str | ..."
+Now add the trends API endpoint.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports_api.py[0m edit: "@router.get("/{date}")
+async def get_report(date: ..." → "@router.get("/trends")
+async def get_trends(projec..."
+Now update the reports list template to include trend charts using Chart.js.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_list.html[0m "{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="md:flex md:items-center md:justify-between mb-6">
+    <h1 class="text-2xl font-bold leading-7 text-gray... (8421 chars)"
+Now run lint to verify.
+[94m[Bash][0m $ uv run ruff check src/project_manager_agent/web/routes/reports_api.py src/project_manager_agent/core...
+[94m[Bash][0m $ uv run ruff format --check src/project_manager_agent/web/routes/reports_api.py src/project_manager_a...
+
+[91m[Error: Exit code 1
+Would reformat: src/project_manager_agent/web/routes/reports_api.py
+1 file would be reformatted, 1 file already formatted][0m
+[94m[Bash][0m $ uv run ruff format src/project_manager_agent/web/routes/reports_api.py
+Now close the bead and update progress.
+[94m[Bash][0m $ bd close pm-bpy.5 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m $ cat >> /Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md << 'PROGRESS'  ##...
+<promise>COMPLETE</promise>
+
+**Summary of changes:**
+
+- **`core/services.py`** — Added `list_report_jsons()` method that reads all `*-status-report.json` files sorted by date
+- **`web/routes/reports_api.py`** — Added `GET /api/reports/trends?project_id=N` endpoint that aggregates trend data (% tasks complete, open risk count, overdue task count) across all report dates
+- **`web/templates/reports_list.html`** — Added Chart.js trend charts (3 line charts in a responsive grid) above the report list, loaded via Alpine.js; shows empty state when fewer than 2 reports exist

@@ -1,0 +1,94 @@
+# Iteration 4 Log
+
+## Metadata
+
+- **Task ID**: pm-62p.5
+- **Task Title**: Portfolio dashboard
+- **Description**: New landing page at / showing all projects in a card grid: project name, RAG status, percent tasks complete, next milestone, forecast end date. Click through to project-scoped views.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T13:57:34.230Z
+- **Ended At**: 2026-04-06T13:59:58.915Z
+- **Duration**: 2m 24s
+- **Input Tokens**: 74
+- **Output Tokens**: 8300
+- **Total Tokens**: 8374
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-62p
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/**/*.py[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/templates/**/*.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/dashboard.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+Now let me check the models and existing templates.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/dashboard.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/base.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/_nav.html[0m
+Good, I have a clear picture. I need to:
+
+1. Add a `list_project_summaries()` method to `ProjectService` that returns all projects with their RAG status, task completion %, next milestone, and forecast end date
+2. Replace the root `/` redirect with a portfolio dashboard page
+3. Create a `portfolio.html` template with project cards
+4. Add a "Portfolio" link to the nav
+
+Let me implement this.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    def list_all_projects(self) -> list[dict]:
+   ..." → "    def list_all_projects(self) -> list[dict]:
+   ..."
+Now update the root `/` route in `app.py` to render the portfolio page instead of redirecting:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m edit: "    # Root redirect: cookie-stored project or firs..." → "    # Portfolio dashboard — shows all projects as ..."
+Now create the portfolio template:
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/portfolio.html[0m "<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio — Project M... (5987 chars)"
+Now add a "Portfolio" link to the nav so users can get back to it from within a project:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/_nav.html[0m edit: "<nav class="flex flex-1 flex-col mt-4">
+    <ul ro..." → "<nav class="flex flex-1 flex-col mt-4">
+    <ul ro..."
+Now remove the unused imports from `app.py`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m edit: "from fastapi import Cookie, Depends, FastAPI, Requ..." → "from fastapi import Depends, FastAPI, Request"
+Now let's run the linter:
+[94m[Bash][0m $ uv run ruff check src/project_manager_agent/web/app.py src/project_manager_agent/core/services.py 2>...
+[94m[Bash][0m $ uv run ruff format --check src/project_manager_agent/web/app.py src/project_manager_agent/core/servi...
+
+[91m[Error: Exit code 1
+Would reformat: src/project_manager_agent/core/services.py
+1 file would be reformatted, 1 file already formatted][0m
+[94m[Bash][0m $ uv run ruff format src/project_manager_agent/core/services.py 2>&1
+Let me also check if there are tests to update:
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96mroot_redirect|def test.*root|def test.*portfolio[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_web.py[0m pattern: [96mroot_redirect|portfolio|def test.*root|\"GET\", \"/\"[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_web.py[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_web.py[0m edit: "class TestRootRedirect:
+    def test_root_redirect..." → "class TestPortfolio:
+    def test_portfolio_return..."
+Now run the tests:
+[94m[Bash][0m $ uv run python -m pytest tests/test_web.py -x -q 2>&1
+All 20 tests pass. Let me also run the full linter:
+[94m[Bash][0m $ uv run ruff check . 2>&1 | head -5
+Now close the bead and update progress:
+[94m[Bash][0m $ bd close pm-62p.5 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now append to progress.md:
+[94m[Bash][0m $ fine for small project counts, would need optimization for 50+ projects --- EOF
+<promise>COMPLETE</promise>
+
+**Summary of changes for pm-62p.5 (Portfolio Dashboard):**
+
+- **`core/services.py`** — Added `list_project_summaries()` that returns all projects with RAG status, task completion %, next pending milestone, and forecast end date
+- **`web/app.py`** — Replaced root `/` redirect with a portfolio page that renders `portfolio.html`
+- **`web/templates/portfolio.html`** (new) — Standalone page with a responsive card grid (1/2/3 columns), each card showing project name, RAG badge, progress bar, milestone info, and forecast end. Cards link to `/projects/{id}/`
+- **`web/templates/_nav.html`** — Added "Portfolio" link at the top of sidebar nav
+- **`tests/test_web.py`** — Updated root route test from redirect check to 200 + content check
+
+All 20 tests pass, linter clean.

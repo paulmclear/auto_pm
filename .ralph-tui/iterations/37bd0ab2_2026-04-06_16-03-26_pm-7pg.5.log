@@ -1,0 +1,61 @@
+# Iteration 5 Log
+
+## Metadata
+
+- **Task ID**: pm-7pg.5
+- **Task Title**: 14.5 — Responsive / mobile layout
+- **Description**: On small screens, list takes full width. Tapping a message navigates to a detail view (reading pane full-screen). Back button returns to list. Acceptance: Usable on mobile-width screens.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:03:26.046Z
+- **Ended At**: 2026-04-06T15:04:54.787Z
+- **Duration**: 1m 28s
+- **Input Tokens**: 39
+- **Output Tokens**: 4910
+- **Total Tokens**: 4949
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m $ bd show pm-7pg.5
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m
+Now I understand the current layout. I need to add responsive behavior: on small screens, show list full-width, and when a message is tapped, show reading pane full-screen with a back button.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "    <!-- Two-column layout -->
+    <div class="fle..." → "    <!-- Two-column layout (desktop) / single-colu..."
+Now add the `mobileView` state and `backToList` method to the Alpine component:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        tab: 'inbound',
+        messages: [],
+    ..." → "        tab: 'inbound',
+        messages: [],
+    ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        switchTab(t) {
+            this.tab = t;
+ ..." → "        switchTab(t) {
+            this.tab = t;
+ ..."
+Now update `selectMessage` to switch to detail view on mobile:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        async selectMessage(msg) {
+            thi..." → "        async selectMessage(msg) {
+            thi..."
+Now run lint to verify:
+[94m[Bash][0m Lint check on templates $ uv run ruff check src/project_manager_agent/web/templates/ 2>&1 | head -5
+Templates are HTML, not Python — lint passes. Let me verify the final file looks correct:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m
+Now close the bead and update progress:
+[94m[Bash][0m Close bead pm-7pg.5 $ bd close pm-7pg.5 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Bash][0m Append progress entry $ tab switching resets to list view - Files changed: `web/templates/messages.html` - **Learnings:**   ...
+Implementation complete. Here's what was done:
+
+- **`mobileView` state** (`'list'` | `'detail'`) added to the Alpine component to track which pane is visible on mobile
+- **List pane**: `w-full md:w-1/3` — full width on mobile, 1/3 on desktop. Hidden when `mobileView === 'detail'` (but always visible on `md+`)
+- **Reading pane**: `w-full md:w-2/3` — full width on mobile, 2/3 on desktop. Hidden when `mobileView === 'list'` (but always visible on `md+`)
+- **Back button**: `md:hidden` — only visible on mobile, returns to list view
+- **selectMessage** sets `mobileView = 'detail'`; **switchTab** resets to `'list'`
+
+Desktop layout is completely unchanged.
+
+<promise>COMPLETE</promise>

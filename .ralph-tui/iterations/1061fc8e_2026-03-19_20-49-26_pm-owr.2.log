@@ -1,0 +1,73 @@
+# Iteration 2 Log
+
+## Metadata
+
+- **Task ID**: pm-owr.2
+- **Task Title**: Enforce task dependency logic in agent decisions
+- **Description**: The depends_on field already exists on Task but the agent doesn't enforce it. Add logic so the agent: (1) does not send reminders for tasks whose upstream dependencies are incomplete, (2) flags these ...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T20:49:26.154Z
+- **Ended At**: 2026-03-19T20:51:04.922Z
+- **Duration**: 1m 38s
+- **Input Tokens**: 49
+- **Output Tokens**: 4401
+- **Total Tokens**: 4450
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+Now let me read the prompt file to understand the agent's current instructions.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+I have a clear picture. I need to:
+1. Add a tool that identifies tasks blocked by incomplete dependencies
+2. Update the prompt so the agent skips reminders for dependency-blocked tasks, flags them in the journal, and considers dependency chains for milestone risk
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_overdue_tasks() -> list[dict]:
+    """Re..." → "def fetch_overdue_tasks() -> list[dict]:
+    """Re..."
+Now add the tool definition and register it:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "fetch_inbox_tool = Tool(" → "fetch_dependency_blocked_tasks_tool = Tool(
+    na..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "    fetch_overdue_tasks_tool," → "    fetch_overdue_tasks_tool,
+    fetch_dependency..."
+Now update the prompt to enforce dependency logic:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdu..." → "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdu..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "5. SEND REMINDERS & CHASE ACTIONS
+   - Do not send..." → "5. SEND REMINDERS & CHASE ACTIONS
+   - Do not send..."
+Now update step 6 to mention dependency chains in milestone risk:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "6. PROJECT HEALTH UPDATE
+   - Based on everything ..." → "6. PROJECT HEALTH UPDATE
+   - Based on everything ..."
+Now run lint:
+[94m[Bash][0m Run linter and format check $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: experimentation/langgraph_example.py
+Would reformat: src/project_manager_agent/core/db/orm.py
+2 files would be reformatted, 35 files already formatted][0m
+The two files that need reformatting are not ones I changed — pre-existing. Let me verify my changed files are fine:
+[94m[Bash][0m Check formatting of changed files only $ uv run ruff format --check src/project_manager_agent/agents/project_manager/tools.py src/project_man...
+Now close the bead:
+[94m[Bash][0m Close the bead $ bd close pm-owr.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now update progress.md:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - `REFERENCE_DATE` is imported at module level a..." → "  - `REFERENCE_DATE` is imported at module level a..."
+<promise>COMPLETE</promise>
+
+**Summary of changes:**
+
+1. **`tools.py`** — Added `fetch_dependency_blocked_tasks()` function that cross-references all tasks' `depends_on` lists against the status of upstream tasks, returning only tasks with incomplete dependencies along with a `blocking_tasks` field showing which upstream task_ids are blocking. Registered the corresponding LangChain `Tool`.
+
+2. **`prompt.py`** — Updated three steps:
+   - **Step 4 (Task Review)**: Agent now calls `fetch_dependency_blocked_tasks`, documents them separately in the journal, and considers cascading dependency chains when assessing milestone risk.
+   - **Step 5 (Reminders)**: Agent is explicitly instructed to NOT send reminders for dependency-blocked tasks.
+   - **Step 6 (Health Update)**: Agent factors dependency chains into RAG status — if an upstream task is overdue/blocked, downstream milestones are flagged as at risk.

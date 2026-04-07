@@ -1,0 +1,100 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: pm-owr.3
+- **Task Title**: Add priority field to Task model and agent triage
+- **Description**: Add a priority field (high/medium/low) to the Task dataclass, ORM model, and SQL schema. Update the agent to use priority for triage: high-priority overdue tasks get escalated sooner, reminder tone is...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T20:51:06.946Z
+- **Ended At**: 2026-03-19T20:54:14.906Z
+- **Duration**: 3m 7s
+- **Input Tokens**: 77
+- **Output Tokens**: 10742
+- **Total Tokens**: 10819
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me study the current state and codebase.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m
+Now let me read the remaining files I need to modify.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+Now I have a complete picture. Let me implement the changes across all layers.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "TaskStatus = Literal["not_started", "in_progress",..." → "TaskStatus = Literal["not_started", "in_progress",..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "    task_id: int
+    description: str
+    owner_na..." → "    task_id: int
+    description: str
+    owner_na..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m edit: "    task_id: Mapped[int] = mapped_column(Integer, ..." → "    task_id: Mapped[int] = mapped_column(Integer, ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m edit: "def _task_to_domain(row: TaskRow) -> Task:
+    ret..." → "def _task_to_domain(row: TaskRow) -> Task:
+    ret..."
+Now update the seed data with priority values for each task.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=1,
+          ..." → "        TaskRow(
+            task_id=1,
+          ..."
+Now update the prompt to use priority for triage, reminders, and journal grouping.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdu..." → "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdu..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - For OVERDUE tasks (due_date has passed, not c..." → "   - Prioritise reminders by task priority — send ..."
+Now update the RAG assessment section to factor in priority.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - Factor in dependency chains: if an upstream t..." → "   - Factor in dependency chains: if an upstream t..."
+Now check if there are any web templates or other files that display tasks and need the priority field.
+[94m[Grep][0m pattern: [96mtask\.status|task_id|fetch_tasks[0m
+[94m[Grep][0m pattern: [96mclass.*Test.*Task|def test.*task[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/tasks.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_repositories.py[0m
+Now add the priority column to the HTML template and update tests to verify the priority field.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/tasks.html[0m edit: "                    <th class="px-4 py-3 text-left..." → "                    <th class="px-4 py-3 text-left..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/tasks.html[0m edit: "                    <td class="whitespace-nowrap p..." → "                    <td class="whitespace-nowrap p..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/tasks.html[0m edit: "<tr><td colspan="6" class="px-4 py-8 text-center t..." → "<tr><td colspan="7" class="px-4 py-8 text-center t..."
+Now check if `TaskPriority` needs to be exported/imported anywhere, and check for the reporter context that reads tasks.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m
+Update the reporter context to include priority in the task output.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m edit: "        *[
+            f"  [{t.status.upper()}] Ta..." → "        *[
+            f"  [{t.status.upper()}] Ta..."
+Now let me also check if the `create_demo_data.py` or `reset.py` need any updates, and then run linting and tests.
+[94m[Bash][0m Run ruff linter $ uv run ruff check . 2>&1 | head -30
+[94m[Bash][0m Check ruff formatting $ uv run ruff format --check . 2>&1 | head -20
+[94m[Bash][0m Apply ruff formatting $ uv run ruff format . 2>&1
+Now run the tests.
+[94m[Bash][0m Run test suite $ uv run pytest tests/ -v 2>&1 | tail -40
+All 82 tests pass. Now close the bead and update progress.
+[94m[Bash][0m Close the bead $ bd close pm-owr.3 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-19 - pm-owr.2" → "## Codebase Patterns (Continued)
+
+- **Adding a new..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - Prompt changes are the primary lever for agent..." → "  - Prompt changes are the primary lever for agent..."
+All done. Here's what was implemented:
+
+**Model layer**: Added `TaskPriority` type (`high`/`medium`/`low`) and `priority` field to the `Task` dataclass and `TaskRow` ORM model (defaults to `"medium"`).
+
+**Data layer**: Updated `_task_to_domain` mapper and seeded all 11 demo tasks with appropriate priorities (critical-path tasks like API, frontend, DB migration, security, go-live = high; supporting tasks = medium).
+
+**Agent prompt**: Updated 3 steps:
+- **Step 4** (Task Review): Tasks grouped by priority (High → Medium → Low) for triage
+- **Step 5** (Reminders): Priority-tiered tone — CRITICAL for high-priority overdue, URGENT for medium, measured for low
+- **Step 6** (Health): Priority weighted in RAG assessment
+
+**Web UI**: Added a Priority column to the tasks table with color-coded badges.
+
+**Reporter**: Priority included in task context strings.
+
+All 82 tests pass, linting clean.
+
+<promise>COMPLETE</promise>

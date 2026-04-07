@@ -1,0 +1,90 @@
+# Iteration 9 Log
+
+## Metadata
+
+- **Task ID**: pm-bpy.1
+- **Task Title**: 12.1 — Structured report schema
+- **Description**: Define a Pydantic model for report output: executive_summary, rag_status, milestone_statuses, task_statistics (by status, by phase), overdue_tasks, raid_highlights, recommendations. The reporter agent...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:31:50.238Z
+- **Ended At**: 2026-04-06T15:34:11.476Z
+- **Duration**: 2m 21s
+- **Input Tokens**: 56
+- **Output Tokens**: 6832
+- **Total Tokens**: 6888
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/prompt.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Let me check the project dependencies and see if there's an existing report API.
+[94m[Bash][0m Check if pydantic is a dependency $ grep pydantic pyproject.toml
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web[0m pattern: [96mreport[0m
+Good, pydantic is available. Now I'll create the schema. Based on the bead description, I need:
+
+1. A Pydantic model for structured report output
+2. The reporter agent outputs JSON alongside markdown
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter[0m
+
+[91m[Error: EISDIR: illegal operation on a directory, read '/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter'][0m
+[94m[Bash][0m List reporter agent files $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/
+Now I'll create the Pydantic schema model and update the reporter agent to output JSON alongside markdown.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/schema.py[0m """"
+Structured Report Schema
+========================
+Pydantic model for structured report output. The reporter agent produces this
+as JSON alongside the markdown report, enabling programmatic consump... (2563 chars)"
+Now update the reporter agent to build the structured report from context data and save it as JSON alongside the markdown.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m edit: """"
+Project Status Reporter
+======================..." → """"
+Project Status Reporter
+======================..."
+Now add the `build_structured_report` function and update `save_report` to also save JSON.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m edit: "REPORTS_DIR = Path(settings.reports_dir)
+
+
+# -----..." → "REPORTS_DIR = Path(settings.reports_dir)
+
+
+# -----..."
+Now update `save_report` to also save the JSON, and update `run` to build the structured report.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m edit: "def save_report(
+    content: str,
+    output_path..." → "def save_report(
+    content: str,
+    output_path..."
+Now update the `run` function to build and pass the structured report.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m edit: "def run(
+    output_path: Optional[Path] = None,
+ ..." → "def run(
+    output_path: Optional[Path] = None,
+ ..."
+Now run lint to check for issues.
+[94m[Bash][0m Lint the changed files $ uv run ruff check src/project_manager_agent/agents/reporter/schema.py src/project_manager_agent/agen...
+Let me also run format check.
+[94m[Bash][0m Check formatting $ uv run ruff format --check src/project_manager_agent/agents/reporter/schema.py src/project_manager_a...
+Now close the bead.
+[94m[Bash][0m Close the bead $ reporter agent now builds structured data from context and saves JSON alongside markdown"
+Now append to progress.md.
+[94m[Bash][0m Append progress entry $ cat >> /Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md << 'EOF'  ## 2026...
+Done. Here's what was implemented:
+
+**New file: `agents/reporter/schema.py`** — Pydantic models:
+- `StructuredReport` — top-level model with `report_date`, `project_name`, `executive_summary`, `rag_status`, `rag_reason`, `milestone_statuses`, `task_statistics`, `overdue_tasks`, `raid_highlights`, `recommendations`
+- Supporting models: `MilestoneStatus`, `TaskStatistics`, `TaskStatsByStatus`, `TaskStatsByPhase`, `OverdueTask`, `RaidHighlight`, `Recommendation`
+
+**Updated: `agents/reporter/agent.py`**:
+- `build_structured_report(ctx, markdown)` computes quantitative fields from raw data and extracts narrative from LLM output
+- `save_report()` now writes a `.json` file alongside the `.md`
+- `run()` orchestrates the full pipeline
+
+<promise>COMPLETE</promise>

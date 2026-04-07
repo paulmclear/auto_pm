@@ -1,0 +1,78 @@
+# Iteration 11 Log
+
+## Metadata
+
+- **Task ID**: pm-bpy.3
+- **Task Title**: 12.3 — Report data API endpoint
+- **Description**: GET /api/reports/{date} returns the structured JSON for a given report date. GET /api/reports returns list of available report dates. Acceptance: API serves structured report data.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:42:46.680Z
+- **Ended At**: 2026-04-06T15:44:33.716Z
+- **Duration**: 1m 47s
+- **Input Tokens**: 58
+- **Output Tokens**: 4668
+- **Total Tokens**: 4726
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/routes/*_api.py[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/app.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/projects_api.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/schema.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m
+Now let me check the existing reports route and the data/reports directory structure.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports.py[0m
+[94m[Bash][0m List report files $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/reports/ 2>/dev/null | head -20
+[94m[Bash][0m List report files recursively $ ls -R /Users/paulmclear/projects/_LEARNING/project_manager/data/reports/ 2>/dev/null
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m pattern: [96mlist_report_names|get_report_content[0m
+Now I have a clear picture. I need to create `GET /api/reports` (list available dates) and `GET /api/reports/{date}` (return structured JSON). Let me check how the reports dir is scoped and if there's a JSON reading method.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m pattern: [96m_reports_dir[0m
+I have everything I need. Now I'll create the reports API endpoint.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports_api.py[0m """"API routes for structured report data."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, Query
+
+from project_manager_agent.... (1529 chars)"
+Now register the router in `app.py`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m edit: "    from project_manager_agent.web.routes import m..." → "    from project_manager_agent.web.routes import m..."
+Now let me avoid accessing the private `_reports_dir` property directly. Let me add a proper method to `ProjectService` instead.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    def get_report_content(self, name: str) -> str..." → "    def get_report_content(self, name: str) -> str..."
+Now update the API to use the proper service method:
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports_api.py[0m """"API routes for structured report data."""
+
+from __future__ import annotations
+
+import json
+
+from fastapi import APIRouter, HTTPException, Query
+
+from project_manager_agent.core.services import Proj... (1247 chars)"
+Now run lint:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/web/routes/reports_api.py src/project_manager_agent/web/...
+[94m[Bash][0m Check formatting $ uv run ruff format --check src/project_manager_agent/web/routes/reports_api.py src/project_manager_a...
+Now close the bead and update progress:
+[94m[Bash][0m Close bead pm-bpy.3 $ bd close pm-bpy.3 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - When a parent bead implements child bead work,..." → "  - When a parent bead implements child bead work,..."
+<promise>COMPLETE</promise>
+
+**Summary of changes:**
+
+- **`web/routes/reports_api.py`** (new) — Two endpoints:
+  - `GET /api/reports?project_id=N` — lists available report dates (newest first)
+  - `GET /api/reports/{date}?project_id=N` — returns structured JSON for a given report date
+- **`web/app.py`** — registered the new `reports_api` router
+- **`core/services.py`** — added `get_report_json(date)` method to read `.json` report files cleanly

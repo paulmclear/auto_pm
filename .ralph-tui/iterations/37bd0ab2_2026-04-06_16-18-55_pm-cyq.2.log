@@ -1,0 +1,50 @@
+# Iteration 8 Log
+
+## Metadata
+
+- **Task ID**: pm-cyq.2
+- **Task Title**: 13.2 — Message templates
+- **Description**: Template selector dropdown at top of composer. Selecting a template pre-fills subject and body with placeholder text. Templates: Status Update, Blocker Report, Risk Escalation, Completion Notice, Ques...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:18:55.743Z
+- **Ended At**: 2026-04-06T15:20:10.373Z
+- **Duration**: 1m 14s
+- **Input Tokens**: 34
+- **Output Tokens**: 2662
+- **Total Tokens**: 2696
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m $ bd show pm-cyq.2 2>/dev/null || echo "bd show failed"
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m
+I need to add a template selector dropdown to the composer modal. This is a frontend-only feature. Let me implement it.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "            <form @submit.prevent="submitCompose()..." → "            <form @submit.prevent="submitCompose()..."
+Now add the templates data and `applyTemplate` method to the Alpine.js component:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        composeSending: false,
+        composeErro..." → "        composeSending: false,
+        composeErro..."
+Now add the `applyTemplate` method after `openCompose`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        async submitCompose() {" → "        applyTemplate(name) {
+            const t ..."
+Now run lint:
+[94m[Bash][0m $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: alembic/env.py
+Would reformat: alembic/versions/ade4f3a0f709_initial_schema.py
+Would reformat: alembic/versions/ce7bed265769_add_is_read_column_to_messages.py
+Would reformat: src/project_manager_agent/cli.py
+4 files would be reformatted, 45 files already formatted][0m
+Lint checks pass (the format issues are pre-existing, not from my changes). Let me close the bead and update progress.
+[94m[Bash][0m $ Custom option clears fields."
+[94m[Bash][0m $ Alpine.js state + `@change` handler keeps it simple   - Using `$event.target.value` in the `@change`...
+Implementation complete. Added a template selector dropdown to the composer modal with 5 templates (Status Update, Blocker Report, Risk Escalation, Completion Notice, Question) plus a "Custom" option. Selecting a template pre-fills subject and body with placeholder text that the user can edit before sending.
+
+<promise>COMPLETE</promise>

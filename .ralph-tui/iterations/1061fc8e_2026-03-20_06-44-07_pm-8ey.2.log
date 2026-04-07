@@ -1,0 +1,151 @@
+# Iteration 11 Log
+
+## Metadata
+
+- **Task ID**: pm-8ey.2
+- **Task Title**: Write machine-readable status snapshot on each agent run
+- **Description**: Write a data/status.json file on each agent run containing a snapshot of all task states, project health, and key metrics. Enables external tools, CI pipelines, and dashboards to consume current state...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-20T06:44:07.793Z
+- **Ended At**: 2026-03-20T06:45:49.130Z
+- **Duration**: 1m 41s
+- **Input Tokens**: 57
+- **Output Tokens**: 4683
+- **Total Tokens**: 4740
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/docs/backlog.json[0m
+
+[91m[Error: File does not exist. Note: your current working directory is /Users/paulmclear/projects/_LEARNING/project_manager.][0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+Now let me look at the agent entry point and the services/models to understand what data is available.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I have a clear picture. I need to write a `data/status.json` snapshot after each agent run. This isn't an LLM tool — it's a post-run export called from `agent.py`. Let me implement it.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/date_utils.py[0m
+Now I'll create the snapshot function and wire it into `agent.py`.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: """"ProjectService — thin facade over all repositor..." → """"ProjectService — thin facade over all repositor..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    # -- Lifecycle -------------------------------..." → "    # -- Status snapshot -------------------------..."
+Now wire it into `agent.py` after the graph runs:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m edit: "    else:
+        graph = build_graph()
+        gr..." → "    else:
+        graph = build_graph()
+        gr..."
+Now run lint to verify:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/core/services.py src/project_manager_agent/agents/projec...
+
+[91m[Error: Exit code 1
+F401 [*] `dataclasses.asdict` imported but unused
+  --> src/project_manager_agent/core/services.py:11:25
+   |
+ 9 | import datetime as dt
+10 | import json
+11 | from dataclasses import asdict
+   |                         ^^^^^^
+12 | from pathlib import Path
+13 | from typing import Any, Optional
+   |
+help: Remove unused import: `dataclasses.asdict`
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.][0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "import json
+from dataclasses import asdict
+from pa..." → "import json
+from pathlib import Path"
+[94m[Bash][0m Lint and format check $ uv run ruff check src/project_manager_agent/core/services.py src/project_manager_agent/agents/projec...
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: src/project_manager_agent/core/services.py
+1 file would be reformatted, 1 file already formatted][0m
+[94m[Bash][0m Auto-format services.py $ uv run ruff format src/project_manager_agent/core/services.py
+Now let me verify the full implementation works by doing a quick smoke test — importing the method and checking it runs against the demo DB:
+[94m[Bash][0m Smoke test status snapshot generation $ uv run python -c " from project_manager_agent.core.services import ProjectService svc = ProjectServi...
+
+[91m[Error: Exit code 1
+Traceback (most recent call last):
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: tasks.priority
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<string>", line 5, in <module>
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py", line 179, in write_status_snapshot
+    tasks = self.read_tasks()
+            ^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py", line 68, in read_tasks
+    return self.tasks.read()
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py", line 165, in read
+    rows = self._session.query(TaskRow).order_by(TaskRow.task_id).all()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: tasks.priority
+[SQL: SELECT tasks.task_id AS tasks_task_id, tasks.description AS tasks_description, tasks.owner_name AS tasks_owner_name, tasks.owner_email AS tasks_owner_email, tasks.due_date AS tasks_due_date, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.phase_id AS tasks_phase_id, tasks.depends_on AS tasks_depends_on, tasks.blocked_reason AS tasks_blocked_reason, tasks.external_dependency AS tasks_external_dependency 
+FROM tasks ORDER BY tasks.task_id]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)][0m
+The DB needs re-seeding since the `priority` column was added in a prior iteration. Let me reset the demo data and re-test:
+[94m[Bash][0m Reset and re-seed demo data $ uv run python reset.py --date 2026-03-20 && uv run python create_demo_data.py
+[94m[Bash][0m Smoke test status snapshot $ uv run python -c " from project_manager_agent.core.services import ProjectService svc = ProjectServi...
+The snapshot generates correctly. Now let me close the bead and update progress.
+[94m[Bash][0m Close the bead $ bd close pm-8ey.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now append to progress.md:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-20 - pm-8ey.1" → "## 2026-03-20 - pm-8ey.2
+- What was implemented: M..."
+<promise>COMPLETE</promise>
+
+**Summary**: Added `write_status_snapshot()` to `ProjectService` that writes `data/status.json` after each agent run. The snapshot includes:
+- Project health (RAG status, forecast end, sponsor)
+- Metrics (task counts by status, overdue count, RAID/action summaries)
+- Milestone statuses with planned/forecast/actual dates
+- Individual task details (status, priority, due date, blockers, dependencies)
+
+Wired into `agent.py` so it runs automatically after the LangGraph loop completes, before the reference date advances.

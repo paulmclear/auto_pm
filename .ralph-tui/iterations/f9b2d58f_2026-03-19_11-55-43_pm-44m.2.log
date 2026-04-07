@@ -1,0 +1,88 @@
+# Iteration 11 Log
+
+## Metadata
+
+- **Task ID**: pm-44m.2
+- **Task Title**: Create FastAPI app factory in web/app.py
+- **Description**: Create src/project_manager_agent/web/app.py with FastAPI application factory. Mount static files from web/static/. Configure Jinja2 template directory. Create get_service() dependency that yields a Pr...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T11:55:43.556Z
+- **Ended At**: 2026-03-19T11:57:13.042Z
+- **Duration**: 1m 29s
+- **Input Tokens**: 52
+- **Output Tokens**: 3836
+- **Total Tokens**: 3888
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-10p
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/**/*[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/**/__init__.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/engine.py[0m
+Now I'll create the web package and app factory.
+[94m[Bash][0m List existing packages $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/
+[94m[Bash][0m Create web package directories $ mkdir -p /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/static /...
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/__init__.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/app.py[0m """"FastAPI application factory for the Project Manager web UI."""
+
+from __future__ import annotations
+
+from collections.abc import AsyncGenerator
+from pathlib import Path
+from typing import Annotated
+... (1658 chars)"
+Now let me create stub route modules so the imports don't fail.
+[94m[Bash][0m Create routes package directory $ mkdir -p /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/__init__.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/dashboard.py[0m """"Dashboard routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()
+"
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/tasks.py[0m """"Task routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()
+"
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/raid.py[0m """"RAID log routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()
+"
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/journal.py[0m """"Journal routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()
+"
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports.py[0m """"Report routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()
+"
+Now let me verify the app factory works and run lint.
+[94m[Bash][0m Verify app factory works $ print('Routes:', [r.path for r in app.routes])"
+[94m[Bash][0m Lint and format check $ uv run ruff check src/project_manager_agent/web/ && uv run ruff format --check src/project_manager_a...
+App factory works and lint passes. Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-44m.2 $ bd close pm-44m.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - Dependencies kept alphabetically sorted in pyp..." → "  - Dependencies kept alphabetically sorted in pyp..."
+<promise>COMPLETE</promise>
+
+**Summary:** Created the FastAPI app factory at `src/project_manager_agent/web/app.py` with:
+- `create_app()` factory that initializes DB tables, mounts `/static`, and includes 5 route modules (dashboard, tasks, raid, journal, reports)
+- `get_service()` async dependency that yields a `ProjectService` and auto-closes it
+- `ServiceDep` type alias for convenient use in route handlers
+- Stub route modules in `web/routes/` with empty `APIRouter` instances
+- `web/static/` and `web/templates/` directories with Jinja2 configured

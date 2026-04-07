@@ -1,0 +1,60 @@
+# Iteration 4 Log
+
+## Metadata
+
+- **Task ID**: pm-owr.4
+- **Task Title**: Send advance warning reminders before task due dates
+- **Description**: Remind task owners 1-2 days before a task is due, not just on the day or after. The warning lead time should be configurable (default: 2 days). The agent should check upcoming due dates each run and s...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T20:54:16.945Z
+- **Ended At**: 2026-03-19T20:55:44.810Z
+- **Duration**: 1m 27s
+- **Input Tokens**: 53
+- **Output Tokens**: 4048
+- **Total Tokens**: 4101
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me start by studying the progress file and the relevant source files.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+Now I have a clear picture. I need to:
+1. Add a `fetch_upcoming_due_tasks` tool function that finds tasks due within N days (default 2)
+2. Register the tool
+3. Update the prompt to include advance warning reminders
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_dependency_blocked_tasks() -> list[dict]..." → "def fetch_upcoming_due_tasks(lead_days: int = 2) -..."
+Now add the Pydantic input schema and tool definition. First the schema:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "class UpdateTaskStatusInput(BaseModel):" → "class FetchUpcomingDueTasksInput(BaseModel):
+    l..."
+Now add the tool definition after `fetch_dependency_blocked_tasks_tool`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "fetch_inbox_tool = Tool(" → "fetch_upcoming_due_tasks_tool = StructuredTool(
+  ..."
+Now register it in the tools list:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "    fetch_dependency_blocked_tasks_tool,
+    fetch..." → "    fetch_dependency_blocked_tasks_tool,
+    fetch..."
+Now update the prompt to incorporate advance warning reminders in steps 4 and 5:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - Call fetch_overdue_tasks to identify all task..." → "   - Call fetch_overdue_tasks to identify all task..."
+Now update the journal entry section in step 4 to include upcoming tasks:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "       * DEPENDENCY-BLOCKED TASKS (from fetch_depe..." → "       * DEPENDENCY-BLOCKED TASKS (from fetch_depe..."
+Now update step 5 to include advance warning reminders:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - For tasks due today that still need attention..." → "   - For UPCOMING tasks (due within the next 1-2 d..."
+Now update step 5's journal entry to include advance warnings:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - Call write_journal_entry (section "Reminders ..." → "   - Call write_journal_entry (section "Reminders ..."
+Now let me run lint to verify:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/agents/project_manager/tools.py src/project_manager_agen...
+Now close the bead and update progress:
+[94m[Bash][0m Close bead pm-owr.4 $ bd close pm-owr.4 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - No new tool was needed — priority data flows t..." → "  - No new tool was needed — priority data flows t..."
+Implementation complete. Added:
+
+- **`fetch_upcoming_due_tasks(lead_days=2)`** tool in `tools.py` — returns incomplete tasks due within the next N days (default 2), excluding overdue/complete tasks, with a `days_until_due` field
+- **Prompt updates** in `prompt.py` — step 4 calls the new tool and journals upcoming tasks; step 5 sends friendly advance warning reminders with priority-tiered tone (skipping dependency-blocked tasks)
+
+<promise>COMPLETE</promise>

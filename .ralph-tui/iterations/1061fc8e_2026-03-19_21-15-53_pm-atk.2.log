@@ -1,0 +1,77 @@
+# Iteration 9 Log
+
+## Metadata
+
+- **Task ID**: pm-atk.2
+- **Task Title**: Add idempotency guard for same-day agent reruns
+- **Description**: Prevent double-sends and duplicate journal entries if the agent runs more than once in a day (e.g. after a crash and restart). Before acting, check whether today's loop has already completed by lookin...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T21:15:53.238Z
+- **Ended At**: 2026-03-19T21:18:01.723Z
+- **Duration**: 2m 8s
+- **Input Tokens**: 58
+- **Output Tokens**: 5160
+- **Total Tokens**: 5218
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/date_utils.py[0m
+Let me look at the journal repository and the tools to understand how journal entries are created.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent[0m pattern: [96mjournal[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+Now let me look at how the journal repository works to understand the idempotency check mechanism.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m pattern: [96mclass FileJournalRepository[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+Now I have a clear picture. I need to add an idempotency guard that prevents the agent from running twice on the same day. The simplest reliable approach: check for an existing journal file for today's date before invoking the graph in `agent.py`.
+
+Let me implement this:
+
+1. Add `has_today_entry()` to `FileJournalRepository`
+2. Expose via `ProjectService`
+3. Add the guard in `agent.py`'s entry point
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m edit: "    def write(self, section: str, content: str) ->..." → "    def has_today_entry(self) -> bool:
+        """..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    def read_last_journal(self) -> Optional[str]:
+..." → "    def has_today_journal(self) -> bool:
+        "..."
+Now add the guard in `agent.py`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m edit: "from project_manager_agent.core.date_utils import ..." → "from project_manager_agent.core.date_utils import ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/agent.py[0m edit: "if __name__ == "__main__":
+    DATA_DIR = Path(__f..." → "def _already_ran_today() -> bool:
+    """Check whe..."
+Now update the protocol to include the new method:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m edit: "class JournalRepository(Protocol):
+    """Contract..." → "class JournalRepository(Protocol):
+    """Contract..."
+Now run lint:
+[94m[Bash][0m Run linter and format check $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: src/project_manager_agent/agents/project_manager/agent.py
+1 file would be reformatted, 37 files already formatted][0m
+[94m[Bash][0m Auto-format code $ uv run ruff format .
+All clean. Now close the bead and update progress.
+[94m[Bash][0m Close the bead $ bd close pm-atk.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now update progress.md:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - Using `{**_DEFAULTS, **user_config}` merge mea..." → "  - Using `{**_DEFAULTS, **user_config}` merge mea..."
+Implementation complete. Here's what was done:
+
+- **`FileJournalRepository.has_today_entry()`** — checks if today's journal file exists on disk
+- **`ProjectService.has_today_journal()`** — facade method exposing the check
+- **`agent.py` entry point guard** — calls `_already_ran_today()` before invoking the graph. If a journal exists for `REFERENCE_DATE`, prints a warning and exits without running the agent or advancing the date
+
+The guard is at the entry point level (not a tool or prompt instruction) so it prevents all duplicate work — no LLM invocation, no duplicate messages, no duplicate journal entries, and no accidental date advancement.
+
+<promise>COMPLETE</promise>

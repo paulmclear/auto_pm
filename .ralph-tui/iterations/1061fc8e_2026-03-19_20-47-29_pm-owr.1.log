@@ -1,0 +1,78 @@
+# Iteration 1 Log
+
+## Metadata
+
+- **Task ID**: pm-owr.1
+- **Task Title**: Detect and flag overdue tasks each agent run
+- **Description**: Add overdue detection to the PM agent daily loop. On each run, compare task due_date against REFERENCE_DATE. Tasks past due and not complete should be flagged as overdue. The agent should log overdue ...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T20:47:29.083Z
+- **Ended At**: 2026-03-19T20:49:24.069Z
+- **Duration**: 1m 54s
+- **Input Tokens**: 54
+- **Output Tokens**: 4396
+- **Total Tokens**: 4450
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me start by understanding the current codebase and progress.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I understand the codebase. I need to:
+
+1. Add a `fetch_overdue_tasks` tool that filters tasks past their due date
+2. Update the system prompt to distinguish overdue tasks with urgent reminder tone
+
+Let me implement this.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_tasks() -> list[dict]:
+    svc = Project..." → "def fetch_tasks() -> list[dict]:
+    svc = Project..."
+Now add the tool definition and register it:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "fetch_tasks_tool = Tool(
+    name="fetch_tasks_fro..." → "fetch_tasks_tool = Tool(
+    name="fetch_tasks_fro..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "    fetch_tasks_tool,
+    fetch_project_plan_tool," → "    fetch_tasks_tool,
+    fetch_overdue_tasks_tool..."
+Now update the system prompt to incorporate overdue detection with urgent tone:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_tasks_..." → "4. TASK REVIEW & DAILY PLAN
+   - Call fetch_overdu..."
+Now let me run the linter to check for issues:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/agents/project_manager/tools.py src/project_manager_agen...
+Let me also verify there are no other tests or checks to run:
+[94m[Glob][0m pattern: [96mtests/**/test_*tools*.py[0m
+[94m[Glob][0m pattern: [96mtests/**/*.py[0m
+[94m[Bash][0m Full lint and format check $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: experimentation/langgraph_example.py
+Would reformat: src/project_manager_agent/agents/project_manager/tools.py
+Would reformat: src/project_manager_agent/core/db/orm.py
+3 files would be reformatted, 34 files already formatted][0m
+[94m[Bash][0m Format the changed tools file $ uv run ruff format src/project_manager_agent/agents/project_manager/tools.py
+Now close the bead and update progress:
+[94m[Bash][0m Close the bead $ bd close pm-owr.1 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## Codebase Patterns (Study These First)
+
+*Add reu..." → "## Codebase Patterns (Study These First)
+
+- **Tool..."
+Implementation complete. Here's what was done:
+
+**`tools.py`** — Added `fetch_overdue_tasks()` function that filters tasks where `due_date < REFERENCE_DATE` and `status != "complete"`, plus the corresponding `fetch_overdue_tasks_tool` registered in the tools list.
+
+**`prompt.py`** — Updated steps 4 and 5:
+- Step 4 now calls `fetch_overdue_tasks` first and journals them prominently with days-overdue count
+- Step 5 differentiates **urgent** tone (overdue tasks with explicit "URGENT" prefix, days-overdue count, request for revised ETA) from **standard** tone (tasks due today)
+
+<promise>COMPLETE</promise>

@@ -1,0 +1,145 @@
+# Iteration 5 Log
+
+## Metadata
+
+- **Task ID**: pm-10p.5
+- **Task Title**: Update create_demo_data.py to seed SQL database
+- **Description**: Update the root-level create_demo_data.py to call create_tables() then seed_demo_data(session) from core.db.seed instead of writing JSON files directly. The script should also seed journal files and s...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:26:04.874Z
+- **Ended At**: 2026-03-19T10:27:31.801Z
+- **Duration**: 1m 26s
+- **Input Tokens**: 51
+- **Output Tokens**: 3473
+- **Total Tokens**: 3524
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-10p
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me study the current state and relevant files.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/create_demo_data.py[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/core/db/**/*.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/engine.py[0m
+Now I have everything I need. The task is to rewrite `create_demo_data.py` to use `create_tables()` + `seed_demo_data(session)` instead of writing JSON files, while keeping journal seeding and date setting.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/reset.py[0m
+Now I'll rewrite `create_demo_data.py` to use SQL seeding instead of JSON files.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/create_demo_data.py[0m "'''
+Demo Data Setup
+===============
+Populates the SQL database with a realistic mid-project scenario for testing
+and demos.  Also seeds journal files and sets the reference date.
+
+Scenario: "Customer ... (2034 chars)"
+Now let me run it to verify it works.
+[94m[Bash][0m Reset DB then run demo data seeding $ uv run python reset.py && uv run python create_demo_data.py
+Now let me run lint checks.
+[94m[Bash][0m Lint and format check $ uv run ruff check create_demo_data.py && uv run ruff format --check create_demo_data.py
+
+[91m[Error: Exit code 1
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:47:11
+   |
+46 |     print('Demo data created:')
+47 |     print(f'  Project:  Customer Portal Modernisation')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 |     print(f'  Date:     {DATE["reference_date"]}')
+49 |     print(f'  RAG:      AMBER')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:49:11
+   |
+47 |     print(f'  Project:  Customer Portal Modernisation')
+48 |     print(f'  Date:     {DATE["reference_date"]}')
+49 |     print(f'  RAG:      AMBER')
+   |           ^^^^^^^^^^^^^^^^^^^^
+50 |     print(f'  Tasks:    11 (4 complete, 2 in progress, 1 blocked)')
+51 |     print(f'  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:50:11
+   |
+48 |     print(f'  Date:     {DATE["reference_date"]}')
+49 |     print(f'  RAG:      AMBER')
+50 |     print(f'  Tasks:    11 (4 complete, 2 in progress, 1 blocked)')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+51 |     print(f'  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)')
+52 |     print(f'  Actions:  3 open (1 overdue)')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:51:11
+   |
+49 |     print(f'  RAG:      AMBER')
+50 |     print(f'  Tasks:    11 (4 complete, 2 in progress, 1 blocked)')
+51 |     print(f'  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+52 |     print(f'  Actions:  3 open (1 overdue)')
+53 |     print(f'  Inbox:    2 unprocessed messages')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:52:11
+   |
+50 |     print(f'  Tasks:    11 (4 complete, 2 in progress, 1 blocked)')
+51 |     print(f'  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)')
+52 |     print(f'  Actions:  3 open (1 overdue)')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+53 |     print(f'  Inbox:    2 unprocessed messages')
+54 |     print(f'  Database: data/project_manager.db')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:53:11
+   |
+51 |     print(f'  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)')
+52 |     print(f'  Actions:  3 open (1 overdue)')
+53 |     print(f'  Inbox:    2 unprocessed messages')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+54 |     print(f'  Database: data/project_manager.db')
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> create_demo_data.py:54:11
+   |
+52 |     print(f'  Actions:  3 open (1 overdue)')
+53 |     print(f'  Inbox:    2 unprocessed messages')
+54 |     print(f'  Database: data/project_manager.db')
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Remove extraneous `f` prefix
+
+Found 7 errors.
+[*] 7 fixable with the `--fix` option.][0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/create_demo_data.py[0m edit: "    print('Demo data created:')
+    print(f'  Proj..." → "    print('Demo data created:')
+    print('  Proje..."
+[94m[Bash][0m Lint and format check $ uv run ruff check create_demo_data.py && uv run ruff format --check create_demo_data.py
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: create_demo_data.py
+1 file would be reformatted][0m
+[94m[Bash][0m Auto-format the file $ uv run ruff format create_demo_data.py
+Let me verify the full flow works end-to-end.
+[94m[Bash][0m End-to-end verification $ uv run python reset.py && uv run python create_demo_data.py
+Working. Now close the bead and update progress.
+[94m[Bash][0m Close the bead $ bd close pm-10p.5 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-19 - pm-10p.6
+- Updated `reset.py` to d..." → "## 2026-03-19 - pm-10p.6
+- Updated `reset.py` to d..."
+<promise>COMPLETE</promise>

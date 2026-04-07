@@ -1,0 +1,115 @@
+# Iteration 10 Log
+
+## Metadata
+
+- **Task ID**: pm-8ey.1
+- **Task Title**: Generate weekly summary report across journals
+- **Description**: Generate a weekly markdown summary covering all journals from the past 7 days: tasks completed, tasks now overdue, tasks at risk, key decisions made, and open blockers. Output to data/reports/YYYY-Www...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-20T06:41:51.069Z
+- **Ended At**: 2026-03-20T06:44:05.922Z
+- **Duration**: 2m 14s
+- **Input Tokens**: 66
+- **Output Tokens**: 6944
+- **Total Tokens**: 7010
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/agent.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m
+Let me check the journal repository and services for reading multiple journals.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m
+Now let me check the reporter prompt and the backlog for the full spec.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/prompt.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/docs/backlog.json[0m
+
+[91m[Error: File does not exist. Note: your current working directory is /Users/paulmclear/projects/_LEARNING/project_manager.][0m
+[94m[Glob][0m pattern: [96m**/backlog*[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/date_utils.py[0m
+Good, I have everything I need. Now let me implement the weekly summary report. The plan:
+
+1. Add `read_range()` to `FileJournalRepository` and protocol
+2. Add `read_journals_range()` to `ProjectService`
+3. Create the weekly summary reporter module at `agents/reporter/weekly.py`
+4. Add a system prompt for the weekly report
+
+Let me also check what journal files exist for reference.
+[94m[Glob][0m pattern: [96mdata/journal/*.md[0m
+Now let me implement. I'll start with the repository and service layers, then the weekly reporter.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m edit: "    def read_last(self) -> Optional[str]:
+        ..." → "    def read_last(self) -> Optional[str]:
+        ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m edit: "class JournalRepository(Protocol):
+    """Contract..." → "class JournalRepository(Protocol):
+    """Contract..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m edit: "    def read_last_journal(self) -> Optional[str]:
+..." → "    def read_last_journal(self) -> Optional[str]:
+..."
+Now create the weekly reporter module.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/weekly.py[0m """"
+Weekly Summary Report Generator
+================================
+Generates a markdown summary covering all journals from the past 7 days:
+tasks completed, tasks now overdue, tasks at risk, key dec... (8700 chars)"
+Now let me run lint to check for issues.
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/agents/reporter/weekly.py src/project_manager_agent/core...
+
+[91m[Error: Exit code 1
+invalid-syntax: Boolean expression cannot be used here
+   --> src/project_manager_agent/agents/reporter/weekly.py:148:10
+    |
+146 |           "",
+147 |           "=== OPEN ACTIONS ===",
+148 |           *[
+    |  __________^
+149 | |             f"  [{a.status.upper()}] Action {a.action_id}: "
+150 | |             f"{a.description} — owner: {a.owner_name}, due: {a.due_date}"
+151 | |             for a in actions
+152 | |             if a.status == "open"
+153 | |         ]
+154 | |         or ["  None"],
+    | |_____________________^
+155 |           "",
+156 |           "=== JOURNAL ENTRIES (past 7 days) ===",
+    |
+
+Found 1 error.][0m
+Need to fix the `or` pattern — can't use it with `*` unpacking directly.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/weekly.py[0m edit: "        "=== OPEN ACTIONS ===",
+        *[
+       ..." → "        "=== OPEN ACTIONS ===",
+        *(
+       ..."
+[94m[Bash][0m Lint and format check $ uv run ruff check src/project_manager_agent/agents/reporter/weekly.py src/project_manager_agent/core...
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: src/project_manager_agent/agents/reporter/weekly.py
+1 file would be reformatted, 3 files already formatted][0m
+[94m[Bash][0m Auto-format weekly.py $ uv run ruff format src/project_manager_agent/agents/reporter/weekly.py
+Now let me verify the module runs without import errors.
+[94m[Bash][0m Verify weekly module imports $ print('Import OK')"
+Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-8ey.1 $ bd close pm-8ey.1 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now update progress.md.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - The guard lives at the `__main__` entry point ..." → "  - The guard lives at the `__main__` entry point ..."
+Implementation complete. Here's what was done:
+
+**Repository layer** — Added `read_range(start, end)` to `FileJournalRepository` that reads all journal files within a date range, returning a `dict[date, str]`. Updated the protocol and service facade.
+
+**Weekly reporter** (`agents/reporter/weekly.py`) — New standalone module that:
+- Gathers past 7 days of journals + current project state (tasks, RAID, actions)
+- Sends context to gpt-4o-mini with a weekly-focused system prompt
+- Outputs to `data/reports/YYYY-Www.md` (ISO week label)
+- Runnable via `uv run python -m project_manager_agent.agents.reporter.weekly`
+
+<promise>COMPLETE</promise>

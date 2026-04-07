@@ -1,0 +1,77 @@
+# Iteration 6 Log
+
+## Metadata
+
+- **Task ID**: pm-593.2
+- **Task Title**: Add escalation logic for persistently overdue tasks
+- **Description**: If a task is N days overdue with no completion or response, send an escalation message to a separate recipient (e.g. project sponsor or manager). N should be configurable (default: 3 days). Escalation...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T21:05:13.893Z
+- **Ended At**: 2026-03-19T21:07:12.280Z
+- **Duration**: 1m 58s
+- **Input Tokens**: 50
+- **Output Tokens**: 5067
+- **Total Tokens**: 5117
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-owr
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m
+Now let me check the models and project data structure for sponsor/manager info.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+Now I have full context. I need to:
+
+1. Add a `fetch_escalation_candidates` tool that finds tasks overdue by N+ days and checks for prior escalation
+2. Update the prompt to instruct the agent on escalation behavior
+
+Let me implement this.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "def fetch_overdue_tasks() -> list[dict]:
+    """Re..." → "def fetch_overdue_tasks() -> list[dict]:
+    """Re..."
+Now add the Pydantic schema and tool definition:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "class FetchUpcomingDueTasksInput(BaseModel):
+    l..." → "class FetchEscalationCandidatesInput(BaseModel):
+ ..."
+Now add the tool definition after `fetch_upcoming_due_tasks_tool`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "fetch_upcoming_due_tasks_tool = StructuredTool(
+  ..." → "fetch_upcoming_due_tasks_tool = StructuredTool(
+  ..."
+Register in the tools list:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/tools.py[0m edit: "    fetch_upcoming_due_tasks_tool,
+    fetch_proje..." → "    fetch_upcoming_due_tasks_tool,
+    fetch_escal..."
+Now update the prompt to add escalation instructions in step 5:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/project_manager/prompt.py[0m edit: "   - For each open action that is overdue or due t..." → "   - ESCALATION LOGIC:
+       * Call fetch_escalat..."
+Now run lint to verify:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/agents/project_manager/tools.py src/project_manager_agen...
+[94m[Bash][0m Check formatting $ uv run ruff format --check src/project_manager_agent/agents/project_manager/tools.py src/project_man...
+Now close the bead and update progress:
+[94m[Bash][0m Close bead pm-593.2 $ bd close pm-593.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now append to progress.md:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-19 - pm-593.1" → "## 2026-03-19 - pm-593.2
+- What was implemented: E..."
+<promise>COMPLETE</promise>
+
+**Summary of changes:**
+
+1. **`tools.py`** — Added `fetch_escalation_candidates(overdue_threshold_days=3)` tool that:
+   - Finds tasks overdue by N+ days (configurable, default 3)
+   - Checks outbox for prior escalation messages per task (looks for "ESCALATION" in message text)
+   - Returns `days_overdue`, `previously_escalated`, `last_escalation_date`, and `sponsor` fields
+   - Registered as a `StructuredTool` with `FetchEscalationCandidatesInput` schema
+
+2. **`prompt.py`** — Added ESCALATION LOGIC subsection in step 5 instructing the agent to:
+   - Call the new tool to find escalation candidates
+   - Send first-time escalations to the project sponsor with task details
+   - Only re-escalate if 3+ additional days have passed or situation worsened
+   - Skip dependency-blocked tasks (delay is upstream, not owner's fault)
+   - Log escalations in the journal

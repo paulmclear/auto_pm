@@ -1,0 +1,55 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: pm-609.2
+- **Task Title**: Move and tighten domain models in core/models.py
+- **Description**: Move project_manager_agent/models.py to src/project_manager_agent/core/models.py. Tighten loose type hints: Project.phases to list[Phase], Project.milestones to list[Milestone], Project.objectives to ...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T09:59:03.715Z
+- **Ended At**: 2026-03-19T10:00:35.213Z
+- **Duration**: 1m 31s
+- **Input Tokens**: 50
+- **Output Tokens**: 3246
+- **Total Tokens**: 3296
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-609
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me study the current state and then implement the changes.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Glob][0m pattern: [96m**/models.py[0m
+The model file is already at the correct location (moved in pm-609.1). I need to: tighten the three `Project` type hints, and add the `Message` dataclass. Let me check the current inbox/outbox message format for context.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src[0m pattern: [96mclass Mailbox|message_id|direction[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/repositories.py[0m
+Now I have all the context. Let me make the edits.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "TaskStatus = Literal["not_started", "in_progress",..." → "TaskStatus = Literal["not_started", "in_progress",..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "    objectives: list  # list of strings" → "    objectives: list[str]"
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "    phases: list = field(default_factory=list)  # ..." → "    phases: list[Phase] = field(default_factory=li..."
+Now add the `Message` dataclass before `JsonSerialiser`:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m edit: "# ------------------------------------------------..." → "@dataclass
+class Message:
+    """A single inbox or..."
+Now let me run lint to verify.
+[94m[Bash][0m Lint and format check models.py $ uv run ruff check src/project_manager_agent/core/models.py && uv run ruff format --check src/project...
+Let me verify the final file looks correct:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now let me also verify that imports of models still work across the codebase:
+[94m[Bash][0m Verify all model imports work $ print('All imports OK')"
+Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-609.2 $ bd close pm-609.2 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-19 - pm-609.1" → "## 2026-03-19 - pm-609.2
+- Tightened `Project` typ..."
+Done. Changes made to `src/project_manager_agent/core/models.py`:
+
+1. **Tightened type hints**: `Project.objectives` → `list[str]`, `Project.phases` → `list[Phase]`, `Project.milestones` → `list[Milestone]`
+2. **Added `MessageDirection`** Literal type alias (`"inbound" | "outbound"`)
+3. **Added `Message` dataclass** with all specified fields: `message_id`, `direction`, `timestamp`, `owner_name`, `owner_email`, `message`, `sender_name`, `sender_email`
+4. **Kept `JsonSerialiser`** intact
+
+<promise>COMPLETE</promise>

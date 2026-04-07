@@ -1,0 +1,86 @@
+# Iteration 9 Log
+
+## Metadata
+
+- **Task ID**: pm-609.9
+- **Task Title**: Write repository unit tests against in-memory SQLite
+- **Description**: Create tests/test_repositories.py with unit tests for all SQL repository implementations using sqlite:///:memory: for isolation. Test pattern: create tables, seed known data, assert reads return expec...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:08:38.274Z
+- **Ended At**: 2026-03-19T10:10:46.172Z
+- **Duration**: 2m 7s
+- **Input Tokens**: 52
+- **Output Tokens**: 7756
+- **Total Tokens**: 7808
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-609
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent[0m pattern: [96mcore/db/**/*.py[0m
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96mtests/**/*.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m
+Now let me read the models to understand the dataclass fields.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+[94m[Bash][0m Check if tests directory exists $ ls /Users/paulmclear/projects/_LEARNING/project_manager/tests/ 2>/dev/null || echo "no tests dir"
+I have all the context I need. Let me create the test file.
+[94m[Bash][0m Create tests directory $ mkdir -p /Users/paulmclear/projects/_LEARNING/project_manager/tests
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/__init__.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_repositories.py[0m """"Unit tests for SQL repository implementations using in-memory SQLite."""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+import tempfile
+from pathlib import Path
+from unittes... (17704 chars)"
+Now let me run the tests.
+[94m[Bash][0m Run repository unit tests $ uv run pytest tests/test_repositories.py -v 2>&1
+All 34 tests pass. Let me run lint as well.
+[94m[Bash][0m Lint and format check $ uv run ruff check tests/test_repositories.py && uv run ruff format --check tests/test_repositories.p...
+
+[91m[Error: Exit code 1
+F401 [*] `tempfile` imported but unused
+ --> tests/test_repositories.py:7:8
+  |
+5 | import datetime as dt
+6 | import json
+7 | import tempfile
+  |        ^^^^^^^^
+8 | from pathlib import Path
+9 | from unittest.mock import patch
+  |
+help: Remove unused import: `tempfile`
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.][0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/tests/test_repositories.py[0m
+[94m[Bash][0m Verify lint passes $ uv run ruff check tests/test_repositories.py && uv run ruff format --check tests/test_repositories.p...
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: tests/test_repositories.py
+1 file would be reformatted][0m
+[94m[Bash][0m Auto-format test file $ uv run ruff format tests/test_repositories.py 2>&1
+[94m[Bash][0m Final lint check $ uv run ruff check tests/test_repositories.py && uv run ruff format --check tests/test_repositories.p...
+Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-609.9 $ bd close pm-609.9 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - Naming convention `*Row` keeps ORM models dist..." → "  - Naming convention `*Row` keeps ORM models dist..."
+All 34 tests pass across all 6 repository implementations:
+
+- **SqliteTaskRepository** (7 tests): read, empty read, update_status, update_blocking, error cases
+- **SqliteProjectRepository** (6 tests): read with phases/milestones, update_health (full + partial), update_milestone, error cases
+- **SqliteRaidRepository** (6 tests): read, add, update (including linked_task_ids JSON), error cases
+- **SqliteActionRepository** (5 tests): read, add, update_status, error cases
+- **SqliteMessageRepository** (4 tests): read_inbox, read_outbox, send, empty read
+- **FileJournalRepository** (6 tests): write, append, read_last (previous day, no past, ignores today, picks most recent)
+
+<promise>COMPLETE</promise>

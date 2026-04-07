@@ -1,0 +1,70 @@
+# Iteration 6 Log
+
+## Metadata
+
+- **Task ID**: pm-609.3
+- **Task Title**: Define repository protocol interfaces in core/protocols.py
+- **Description**: Create core/protocols.py with typing.Protocol classes for all repositories. Each protocol defines the public API contract that SQL (and potentially other) implementations must satisfy. All methods ret...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:03:18.099Z
+- **Ended At**: 2026-03-19T10:04:19.854Z
+- **Duration**: 1m 1s
+- **Input Tokens**: 35
+- **Output Tokens**: 2645
+- **Total Tokens**: 2680
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-609
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/repositories.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I have a clear picture of the existing repositories and models. Let me create the protocols.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m """"Protocol interfaces for all repository contracts.
+
+Each protocol defines the public API that any implementation (JSON file-based,
+SQL-backed, etc.) must satisfy.  All methods return typed domain ob... (2335 chars)"
+Now let me run the linter to verify.
+[94m[Bash][0m Lint and format check protocols.py $ uv run ruff check src/project_manager_agent/core/protocols.py && uv run ruff format --check src/proj...
+
+[91m[Error: Exit code 1
+F401 [*] `project_manager_agent.core.models.Milestone` imported but unused
+  --> src/project_manager_agent/core/protocols.py:17:5
+   |
+15 |     ActionStatus,
+16 |     Message,
+17 |     Milestone,
+   |     ^^^^^^^^^
+18 |     MilestoneStatus,
+19 |     Project,
+   |
+help: Remove unused import: `project_manager_agent.core.models.Milestone`
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.][0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/protocols.py[0m edit: "    Message,
+    Milestone,
+    MilestoneStatus," → "    Message,
+    MilestoneStatus,"
+[94m[Bash][0m Lint and format check protocols.py $ uv run ruff check src/project_manager_agent/core/protocols.py && uv run ruff format --check src/proj...
+Clean. Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-609.3 $ bd close pm-609.3 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-03-19 - pm-609.4" → "## 2026-03-19 - pm-609.3
+- Created `core/protocols..."
+Done. Created `src/project_manager_agent/core/protocols.py` with 6 Protocol classes:
+
+- **TaskRepository** — `read()`, `update_status()`, `update_blocking()`
+- **ProjectRepository** — `read()`, `update_health()`, `update_milestone()`
+- **RaidRepository** — `read()`, `add()`, `update()`
+- **ActionRepository** — `read()`, `add()`, `update_status()`
+- **MessageRepository** — `send()`, `read_inbox()`, `read_outbox()`
+- **JournalRepository** — `read_last()`, `write()`
+
+All methods return typed domain objects (e.g. `Project`, `list[Task]`, `list[RaidItem]`) rather than raw dicts. Protocol signatures also use proper typed parameters (`dt.date` for dates, `RagStatus`/`MilestoneStatus` literals) so SQL implementations will have a clean, type-safe contract to satisfy.
+
+<promise>COMPLETE</promise>

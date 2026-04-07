@@ -1,0 +1,123 @@
+# Iteration 2 Log
+
+## Metadata
+
+- **Task ID**: pm-10p.3
+- **Task Title**: Rewire reporter context.py to use ProjectService
+- **Description**: Update agents/reporter/context.py to replace direct repo instantiation with ProjectService calls. Adapt load_all() to work with typed dataclasses: tasks as list[Task] (use t.status instead of t['statu...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:20:00.017Z
+- **Ended At**: 2026-03-19T10:22:07.571Z
+- **Duration**: 2m 7s
+- **Input Tokens**: 61
+- **Output Tokens**: 5554
+- **Total Tokens**: 5615
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-10p
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+Now let me check the model dataclasses to understand their attribute names.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m pattern: [96m^class (Project|RaidItem|Action)\b[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now let me also check the Phase and Milestone dataclasses:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I have everything I need. The key changes:
+
+1. Replace direct repo imports with `ProjectService`
+2. In `load_all()`: use `svc.read_tasks()`, `svc.read_project()`, etc.
+3. In `format_context()`: access `Project`, `RaidItem`, `Action` as dataclass attributes instead of dict keys
+4. RAID items already use dict access (`r['type']`) — need to switch to `r.type`
+5. Actions use dict access (`a['status']`) — need to switch to `a.status`
+6. Project uses dict access (`p['name']`) — need to switch to `p.name`
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py[0m """"
+Reporter — Data gathering and context formatting
+=================================================
+Loads all project data and formats it into a string suitable for passing to
+the report-generation... (6132 chars)"
+Now let me run the linter to check for issues.
+[94m[Bash][0m Lint context.py $ uv run ruff check src/project_manager_agent/agents/reporter/context.py
+Let me also verify the reporter agent module still works with the updated context:
+[94m[Bash][0m Smoke test reporter context $ print(format_context(ctx)[:500])"
+
+[91m[Error: Exit code 1
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py", line 18, in load_all
+    project = svc.read_project()
+              ^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py", line 83, in read_project
+    return self.project.read()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py", line 203, in read
+    raise ValueError("No project found in database")
+ValueError: No project found in database][0m
+The DB just doesn't have data seeded. Let me seed it and retry:
+[94m[Bash][0m Seed demo data then smoke test $ print(format_context(ctx)[:800])"
+
+[91m[Error: Exit code 1
+Demo data created:
+  Project:  Customer Portal Modernisation
+  Date:     2026-03-20
+  RAG:      AMBER
+  Tasks:    11 (4 complete, 2 in progress, 1 blocked)
+  RAID:     7 items (2 risks, 2 assumptions, 1 issues, 2 decisions)
+  Actions:  3 open (1 overdue)
+  Inbox:    2 unprocessed messages
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/context.py", line 18, in load_all
+    project = svc.read_project()
+              ^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py", line 83, in read_project
+    return self.project.read()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py", line 203, in read
+    raise ValueError("No project found in database")
+ValueError: No project found in database][0m
+The demo data script seeds old JSON files but not the SQLite DB. Let me check how the DB gets seeded.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db[0m pattern: [96mseed|demo[0m
+[94m[Bash][0m Seed SQLite demo data $ seed_demo_data()"
+
+[91m[Error: Exit code 1
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+TypeError: seed_demo_data() missing 1 required positional argument: 'session'][0m
+[94m[Bash][0m Seed SQLite DB with demo data $ uv run python -c " from project_manager_agent.core.db.engine import SessionFactory from project_mana...
+[94m[Bash][0m Smoke test reporter context $ print(format_context(ctx)[:1000])"
+Everything works. Now let me run the full lint check and close the bead.
+[94m[Bash][0m Full lint and format check $ uv run ruff check . && uv run ruff format --check .
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: create_demo_data.py
+Would reformat: experimentation/langgraph_example.py
+Would reformat: reset.py
+Would reformat: src/project_manager_agent/agents/reporter/context.py
+Would reformat: src/project_manager_agent/core/db/orm.py
+5 files would be reformatted, 22 files already formatted][0m
+[94m[Bash][0m Format context.py $ uv run ruff format src/project_manager_agent/agents/reporter/context.py
+Now close the bead and update progress.
+[94m[Bash][0m Close bead pm-10p.3 $ updated all dict access to dataclass attribute access for Project, RaidItem, and Action"
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "---
+
+" → "---
+
+## 2026-03-19 - pm-10p.3
+- Rewired `agents/re..."
+
+[91m[Error: <tool_use_error>Found 2 matches of the string to replace, but replace_all is false. To replace all occurrences, set replace_all to true. To replace only one occurrence, please provide more context to uniquely identify the instance.
+String: ---
+
+</tool_use_error>][0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "  - `DATA_DIR` is 3 parents up from `core/services..." → "  - `DATA_DIR` is 3 parents up from `core/services..."
+Done. The reporter's `context.py` now uses `ProjectService` instead of direct repo instantiation, with all dict access converted to dataclass attribute access. Smoke test confirmed it produces correct output.
+
+<promise>COMPLETE</promise>

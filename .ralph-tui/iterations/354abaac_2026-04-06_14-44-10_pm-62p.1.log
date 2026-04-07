@@ -1,0 +1,200 @@
+# Iteration 1 Log
+
+## Metadata
+
+- **Task ID**: pm-62p.1
+- **Task Title**: Database schema migration
+- **Description**: Add project_id FK to tasks, raid_items, actions, messages tables. Write an Alembic or manual migration script. Backfill existing data with a default project ID. Add indexes on project_id columns.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T13:44:10.402Z
+- **Ended At**: 2026-04-06T13:48:55.467Z
+- **Duration**: 4m 45s
+- **Input Tokens**: 136
+- **Output Tokens**: 12616
+- **Total Tokens**: 12752
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-62p
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/engine.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/repositories.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96m**/migrations/**[0m
+[94m[Glob][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager[0m pattern: [96m**/alembic*[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I have the full picture. Let me also check what tools reference and the `create_demo_data.py` and `reset.py` scripts.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/create_demo_data.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/reset.py[0m
+Now I'll implement the changes. Let me start with the ORM, seed, and migration script.
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m edit: "class TaskRow(Base):
+    __tablename__ = "tasks"
+
+..." → "class TaskRow(Base):
+    __tablename__ = "tasks"
+
+..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m edit: "class RaidItemRow(Base):
+    __tablename__ = "raid..." → "class RaidItemRow(Base):
+    __tablename__ = "raid..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m edit: "class ActionRow(Base):
+    __tablename__ = "action..." → "class ActionRow(Base):
+    __tablename__ = "action..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m edit: "class MessageRow(Base):
+    __tablename__ = "messa..." → "class MessageRow(Base):
+    __tablename__ = "messa..."
+Now update the seed data to set `project_id` on all rows:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "    tasks = [
+        # Phase 1 — Discovery (all c..." → "    pid = project.id  # project_id FK for child ro..."
+Now I need to add `project_id=pid` to each of the remaining TaskRow, RaidItemRow, ActionRow, and MessageRow entries. Let me do this efficiently:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+I need to add `project_id=pid` to each TaskRow (2-11), each RaidItemRow (1-7), each ActionRow (1-3), and each MessageRow (3). Let me use a targeted approach for each:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=2,
+          ..." → "        TaskRow(
+            task_id=2,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=3,
+          ..." → "        TaskRow(
+            task_id=3,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=4,
+          ..." → "        TaskRow(
+            task_id=4,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=5,
+          ..." → "        TaskRow(
+            task_id=5,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=6,
+          ..." → "        TaskRow(
+            task_id=6,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=7,
+          ..." → "        TaskRow(
+            task_id=7,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=8,
+          ..." → "        TaskRow(
+            task_id=8,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=9,
+          ..." → "        TaskRow(
+            task_id=9,
+          ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=10,
+         ..." → "        TaskRow(
+            task_id=10,
+         ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        TaskRow(
+            task_id=11,
+         ..." → "        TaskRow(
+            task_id=11,
+         ..."
+Now add `project_id=pid` to all RaidItemRow entries:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=1," → "        RaidItemRow(
+            raid_id=1,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=2," → "        RaidItemRow(
+            raid_id=2,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=3," → "        RaidItemRow(
+            raid_id=3,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=4," → "        RaidItemRow(
+            raid_id=4,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=5," → "        RaidItemRow(
+            raid_id=5,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=6," → "        RaidItemRow(
+            raid_id=6,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        RaidItemRow(
+            raid_id=7," → "        RaidItemRow(
+            raid_id=7,
+      ..."
+Now ActionRow entries:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        ActionRow(
+            action_id=1," → "        ActionRow(
+            action_id=1,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        ActionRow(
+            action_id=2," → "        ActionRow(
+            action_id=2,
+      ..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        ActionRow(
+            action_id=3," → "        ActionRow(
+            action_id=3,
+      ..."
+Now MessageRow entries. There are 3 MessageRow constructors - let me add `project_id=pid` to each:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        MessageRow(
+            message_id=str(uui..." → "        MessageRow(
+            message_id=str(uui..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        MessageRow(
+            message_id=str(uui..." → "        MessageRow(
+            message_id=str(uui..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m edit: "        MessageRow(
+            message_id=str(uui..." → "        MessageRow(
+            message_id=str(uui..."
+Now create the migration script:
+[94m[Bash][0m List db directory contents $ ls /Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/migrations/__init__.py[0m
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/migrations/001_add_project_id.py[0m """"Migration 001: Add project_id FK to tasks, raid_items, actions, messages.
+
+Adds a nullable project_id column to each table, backfills existing rows
+with the ID of the first project found, and creat... (2290 chars)"
+Now let's run lint and test the migration against the existing DB:
+[94m[Bash][0m Lint changed files $ uv run ruff check src/project_manager_agent/core/db/orm.py src/project_manager_agent/core/db/seed.py...
+[94m[Bash][0m Check formatting $ uv run ruff format --check src/project_manager_agent/core/db/orm.py src/project_manager_agent/core/d...
+
+[91m[Error: Exit code 1
+Would reformat: src/project_manager_agent/core/db/migrations/001_add_project_id.py
+1 file would be reformatted, 2 files already formatted][0m
+[94m[Bash][0m Format migration file $ uv run ruff format src/project_manager_agent/core/db/migrations/001_add_project_id.py
+Now let's test the migration against the existing DB:
+[94m[Bash][0m Run migration on existing DB $ uv run python -m project_manager_agent.core.db.migrations.001_add_project_id
+Migration ran successfully. Let's verify idempotency:
+[94m[Bash][0m Verify migration is idempotent $ uv run python -m project_manager_agent.core.db.migrations.001_add_project_id
+Let's also verify reset + demo data still works with the new schema:
+[94m[Bash][0m Verify reset + seed with new schema $ uv run python reset.py && uv run python create_demo_data.py
+Let's verify the project_id values are set correctly in the new DB:
+[94m[Bash][0m Verify project_id populated in all tables $ uv run python -c " from project_manager_agent.core.db.engine import get_session from sqlalchemy impo...
+All rows have `project_id` set. Now run full lint:
+[94m[Bash][0m Run full lint and format check $ uv run ruff check . && uv run ruff format --check .
+Now close the bead:
+[94m[Bash][0m Close bead pm-62p.1 $ bd close pm-62p.1 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+Now update progress.md:
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "*Add reusable patterns discovered during developme..." → "- **Migration pattern**: No Alembic in this projec..."
+<promise>COMPLETE</promise>
+
+**Summary of what was implemented:**
+
+1. **`orm.py`** — Added `project_id` column (nullable `Integer`, FK to `projects.id`, indexed) to `TaskRow`, `RaidItemRow`, `ActionRow`, and `MessageRow`
+2. **`migrations/001_add_project_id.py`** — Idempotent manual migration script that:
+   - Adds `project_id` column to each table (skips if already present)
+   - Backfills existing NULL rows with the first project's ID
+   - Creates indexes (`ix_<table>_project_id`)
+3. **`seed.py`** — All seeded child rows now include `project_id=pid` referencing the demo project

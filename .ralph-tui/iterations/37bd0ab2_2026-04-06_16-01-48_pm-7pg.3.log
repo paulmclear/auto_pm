@@ -1,0 +1,76 @@
+# Iteration 4 Log
+
+## Metadata
+
+- **Task ID**: pm-7pg.3
+- **Task Title**: 14.3 — Reading pane
+- **Description**: Right pane displays full message content for selected message. Header: from, to, date, related task (as link). Body: full message text with whitespace preserved. Empty state when no message selected. ...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:01:48.301Z
+- **Ended At**: 2026-04-06T15:03:24.357Z
+- **Duration**: 1m 36s
+- **Input Tokens**: 52
+- **Output Tokens**: 4784
+- **Total Tokens**: 4836
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/routes/*mail*[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/templates/*mail*[0m
+[94m[Glob][0m pattern: [96msrc/project_manager_agent/web/**/*message*[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/messages_api.py[0m
+Let me check the Message model and see what fields are available.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core[0m pattern: [96mclass Message[0m
+Now I have the full picture. The issues are:
+
+1. The API only returns `subject` (first 80 chars) — need a single-message endpoint or include full body
+2. Line 73 shows `selected.subject` instead of full body text
+3. Need to show `task_id` as a link in the header
+4. Need auto-select first message on page load
+
+I'll add a GET `/api/messages/{message_id}` endpoint for full message content, update the frontend to fetch it on selection, and add auto-select.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/messages_api.py[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/messages_api.py[0m edit: "@router.patch("/{message_id}/read")" → "@router.get("/{message_id}")
+async def get_message..."
+Now update the template — fix the reading pane body, add task link, auto-select first message, and fetch full message on select:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "            <template x-if="selected">
+           ..." → "            <template x-if="selected">
+           ..."
+Now update the JS to add `selectedDetail`, fetch full message on select, and auto-select first message:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        selected: null,
+        selectedId: null," → "        selected: null,
+        selectedId: null,
+..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        async loadMessages() {
+            this.lo..." → "        async loadMessages() {
+            this.lo..."
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        async selectMessage(msg) {
+            thi..." → "        async selectMessage(msg) {
+            thi..."
+Also reset selection on tab switch properly:
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/messages.html[0m edit: "        switchTab(t) {
+            this.tab = t;
+ ..." → "        switchTab(t) {
+            this.tab = t;
+ ..."
+Now run lint:
+[94m[Bash][0m $ uv run ruff check src/project_manager_agent/web/routes/messages_api.py
+Now close the bead and update progress:
+[94m[Bash][0m $ bd close pm-7pg.3 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "## 2026-04-06 - pm-7pg.2" → "## 2026-04-06 - pm-7pg.3
+- Implemented reading pan..."
+Done. Here's what was implemented:
+
+- **GET `/api/messages/{message_id}`** — new endpoint returning full message body, task_id, and metadata
+- **Reading pane** — shows from, to, date, and related task as a clickable link in the header; full message body with whitespace preserved below
+- **Empty state** — "Select a message to read" when nothing is selected
+- **Auto-select** — first message is selected automatically on page load
+
+<promise>COMPLETE</promise>

@@ -1,0 +1,70 @@
+# Iteration 8 Log
+
+## Metadata
+
+- **Task ID**: pm-609.7
+- **Task Title**: Create demo data seeding in core/db/seed.py
+- **Description**: Create core/db/seed.py with a seed_demo_data(session: Session) function that inserts the Customer Portal Modernisation demo scenario via ORM objects. Port the logic from the current create_demo_data.p...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-03-19T10:06:08.401Z
+- **Ended At**: 2026-03-19T10:08:36.082Z
+- **Duration**: 2m 27s
+- **Input Tokens**: 47
+- **Output Tokens**: 7935
+- **Total Tokens**: 7982
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-609
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+Let me study the existing code and progress first.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/create_demo_data.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/orm.py[0m
+Now let me check the models and engine files for the imports I'll need.
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/engine.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/models.py[0m
+Now I have everything I need. Let me create the seed file.
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/db/seed.py[0m """"Seed the database with the Customer Portal Modernisation demo scenario."""
+
+import datetime as dt
+import json
+import uuid
+from pathlib import Path
+
+from sqlalchemy.orm import Session
+
+from project_... (20727 chars)"
+Now let me lint and verify.
+[94m[Bash][0m Lint and format check seed.py $ uv run ruff check src/project_manager_agent/core/db/seed.py && uv run ruff format --check src/projec...
+
+[91m[Error: Exit code 1
+All checks passed!
+Would reformat: src/project_manager_agent/core/db/seed.py
+1 file would be reformatted][0m
+[94m[Bash][0m Auto-format seed.py $ uv run ruff format src/project_manager_agent/core/db/seed.py
+Now let me verify the module imports correctly.
+[94m[Bash][0m Verify seed module imports $ print('Import OK')"
+Let me also do a quick integration test — create tables and seed, then verify data.
+[94m[Bash][0m Integration test: seed and verify counts $ uv run python -c " from project_manager_agent.core.db.engine import create_tables, get_session from ...
+All counts match. Now let me close the bead and update progress.
+[94m[Bash][0m Close bead pm-609.7 $ bd close pm-609.7 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m edit: "---
+
+## 2026-03-19 - pm-609.8" → "---
+
+## 2026-03-19 - pm-609.7
+- Created `core/db/s..."
+<promise>COMPLETE</promise>
+
+Created `src/project_manager_agent/core/db/seed.py` with:
+
+- **`seed_demo_data(session)`** — inserts the full Customer Portal Modernisation demo scenario via ORM objects: 1 project, 3 phases, 3 milestones, 11 tasks, 7 RAID items, 3 actions, 3 messages (2 inbound, 1 outbound)
+- **`_seed_journals()`** — writes journal markdown files for 2026-03-18 and 2026-03-19
+- All data matches the existing `create_demo_data.py` exactly
+- Verified with in-memory SQLite integration test — all counts correct

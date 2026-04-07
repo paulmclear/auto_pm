@@ -1,0 +1,69 @@
+# Iteration 13 Log
+
+## Metadata
+
+- **Task ID**: pm-bpy.4
+- **Task Title**: 12.4 — Visual report dashboard
+- **Description**: New report detail template with cards, tables, and Chart.js charts rendering the structured data. Tabbed view: Visual (default) and Markdown (raw). Responsive layout. Acceptance: Reports render as vis...
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-04-06T15:46:50.641Z
+- **Ended At**: 2026-04-06T15:49:12.718Z
+- **Duration**: 2m 22s
+- **Input Tokens**: 51
+- **Output Tokens**: 10454
+- **Total Tokens**: 10505
+- **Agent**: claude
+- **Model**: claude-opus-4-6
+- **Epic**: pm-7pg
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m List web routes and templates $ ls src/project_manager_agent/web/routes/ src/project_manager_agent/web/templates/
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_detail.html[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports_api.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/agents/reporter/schema.py[0m
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/base.html[0m
+[94m[Bash][0m List report JSON files $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/reports/*.json 2>/dev/null | head -5
+[94m[Bash][0m Find report JSON files $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/*/reports/*.json 2>/dev/null || find /U...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_list.html[0m
+Now I have a clear picture. Let me check the service method for getting report JSON and look at a sample report to understand the data shape.
+[94m[Grep][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/core/services.py[0m pattern: [96mget_report_json|get_report_content|list_report_names[0m
+[94m[Bash][0m Find report files and data directories $ find /Users/paulmclear/projects/_LEARNING/project_manager/data -type d 2>/dev/null
+[94m[Bash][0m List report and project data files $ ls /Users/paulmclear/projects/_LEARNING/project_manager/data/1/ 2>/dev/null
+No report files exist yet — that's fine, I'll handle the "no JSON available" case gracefully. Now I have everything I need to build the visual dashboard. Let me implement it.
+
+The plan:
+1. Update `reports.py` route to pass structured JSON data alongside the markdown HTML
+2. Rewrite `reports_detail.html` with a tabbed Visual/Markdown view, cards, tables, and Chart.js charts
+[94m[Edit][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/routes/reports.py[0m edit: """"Report routes -- list reports and view individu..." → """"Report routes -- list reports and view individu..."
+Now rewrite the detail template with the visual dashboard:
+[94m[Write][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/src/project_manager_agent/web/templates/reports_detail.html[0m "{% extends "base.html" %}
+{% block title %}Report — {{ date }}{% endblock %}
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_prefix }}/reports" class="inline-flex items-center gap-x-1.5 tex... (20096 chars)"
+Now let me run lint to check for issues.
+[94m[Bash][0m Lint the modified route file $ uv run ruff check src/project_manager_agent/web/routes/reports.py
+[94m[Bash][0m Check formatting $ uv run ruff format --check src/project_manager_agent/web/routes/reports.py
+Lint and formatting pass. Now close the bead and document learnings.
+[94m[Bash][0m Close the bead $ bd close pm-bpy.4 --db /Users/paulmclear/projects/_LEARNING/project_manager/.beads/beads.db --reason...
+[94m[Read][0m [95m/Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md[0m
+[94m[Bash][0m Append progress log entry $ cat >> /Users/paulmclear/projects/_LEARNING/project_manager/.ralph-tui/progress.md << 'EOF'  ## 2026...
+Implementation complete. Here's what was built:
+
+**Visual Dashboard** (`reports_detail.html` + `reports.py`):
+- **Tabbed view**: Visual (default) and Markdown toggle
+- **RAG status card**: Color-coded circle with reason text
+- **Executive summary**: Full-width narrative card
+- **Task statistics**: 4 summary stat cards + doughnut chart (by status) + stacked bar chart (by phase)
+- **Milestones table**: With achieved/missed/pending badges
+- **Overdue tasks table**: With days-overdue badges
+- **RAID highlights table**: Color-coded type badges (risk/issue/assumption/decision)
+- **Recommendations list**: Priority-badged items with related item links
+- **Graceful fallback**: If no structured JSON exists, shows markdown view with a notice
+
+<promise>COMPLETE</promise>
